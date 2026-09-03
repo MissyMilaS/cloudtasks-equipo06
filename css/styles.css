@@ -1,0 +1,44 @@
+/* CloudTasks - estilos iniciales */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  line-height: 1.5;
+}
+
+header,
+main {
+  width: min(900px, 92%);
+  margin: 0 auto;
+}
+
+header {
+  padding: 2rem 0 1rem;
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  padding: 0.65rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* El Estudiante 2 puede desarrollar aquí el diseño visual completo. */
