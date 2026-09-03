@@ -1,44 +1,50 @@
-/* CloudTasks - estilos iniciales */
-
-* {
+*{
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  line-height: 1.5;
+body{
+  background-color: aqua;
+  color: brown;
+  justify-content: center;
+  align-items: center;
+  display: flex;
 }
-
-header,
-main {
-  width: min(900px, 92%);
-  margin: 0 auto;
+.container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 120px;
+  width: 600px;
 }
-
-header {
-  padding: 2rem 0 1rem;
+.stats-container{
+  padding: 10px;
+  border: 2px solid antiquewhite;
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  justify-content: space-between;
 }
-
-section {
-  margin-bottom: 2rem;
+.details{
+  width: 90%;
 }
-
-form {
-  display: grid;
-  gap: 0.75rem;
+#progressBar{
+  width: 100%;
+  height: 10px;
+  background-color: blue;
+  margin-top: 20px;
+  border-radius: 5px;
 }
-
-input,
-textarea,
-select,
-button {
-  font: inherit;
-  padding: 0.65rem;
+#numbers {
+  width: 100px;
+  height: 100px;
+  background-color: blueviolet;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  border-radius: 50%;
+  color: aliceblue;
+  font-weight: bold;
 }
-
-button {
-  cursor: pointer;
-}
-
-/* El Estudiante 2 puede desarrollar aquí el diseño visual completo. */
