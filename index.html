@@ -3,31 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestor de Tareas</title>
+    <title>CloudTasks</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app">
       <section class="card">
-        <h1>Gestor de tareas</h1>
+        <header class="app-header">
+          <h1>CloudTasks</h1>
+          <p>Organiza tus pendientes con prioridad, fecha límite y estado.</p>
+        </header>
 
         <form id="taskForm" novalidate>
-          <label for="taskInput" class="sr-only">Nueva tarea</label>
-          <div class="input-row">
-            <input
-              id="taskInput"
-              type="text"
-              maxlength="120"
-              placeholder="Ej. Estudiar para el examen"
-              aria-describedby="errorMessage"
-            />
-            <input
-              id="dueDateInput"
-              type="date"
-              aria-label="Fecha límite de la tarea"
-            />
-            <button type="submit" id="addTaskButton">Agregar</button>
+          <div class="form-grid">
+            <div class="field">
+              <label for="titleInput">Título</label>
+              <input
+                id="titleInput"
+                name="title"
+                type="text"
+                maxlength="80"
+                placeholder="Ej. Revisar entrega final"
+                aria-describedby="errorMessage"
+              />
+            </div>
+
+            <div class="field">
+              <label for="priorityInput">Prioridad</label>
+              <select id="priorityInput" name="priority">
+                <option value="">Selecciona una prioridad</option>
+                <option value="Alta">Alta</option>
+                <option value="Media">Media</option>
+                <option value="Baja">Baja</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="statusInput">Estado</label>
+              <select id="statusInput" name="status">
+                <option value="Pendiente">Pendiente</option>
+                <option value="En proceso">En proceso</option>
+                <option value="Iniciado">Iniciado</option>
+                <option value="Finalizada">Finalizada</option>
+              </select>
+            </div>
+
+            <div class="field field-full">
+              <label for="descriptionInput">Descripción</label>
+              <textarea
+                id="descriptionInput"
+                name="description"
+                rows="4"
+                maxlength="250"
+                placeholder="Describe la tarea con detalle..."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label for="deadlineInput">Fecha límite</label>
+              <input id="deadlineInput" name="deadline" type="date" />
+            </div>
           </div>
+
+          <div class="form-actions">
+            <button type="submit" id="addTaskButton">Crear tarea</button>
+            <button type="reset" class="secondary-btn">Limpiar</button>
+          </div>
+
           <p id="errorMessage" class="error-message" aria-live="polite"></p>
         </form>
 
