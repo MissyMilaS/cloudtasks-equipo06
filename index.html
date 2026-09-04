@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestor de Tareas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="card">
+        <h1>Gestor de tareas</h1>
+
+        <form id="taskForm" novalidate>
+          <label for="taskInput" class="sr-only">Nueva tarea</label>
+          <div class="input-row">
+            <input
+              id="taskInput"
+              type="text"
+              maxlength="120"
+              placeholder="Ej. Estudiar para el examen"
+              aria-describedby="errorMessage"
+            />
+            <input
+              id="dueDateInput"
+              type="date"
+              aria-label="Fecha límite de la tarea"
+            />
+            <button type="submit" id="addTaskButton">Agregar</button>
+          </div>
+          <p id="errorMessage" class="error-message" aria-live="polite"></p>
+        </form>
+
+        <div class="summary">
+          <span id="taskCount">0 tareas</span>
+        </div>
+
+        <ul id="taskList" class="task-list" aria-live="polite"></ul>
+      </section>
+    </main>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>

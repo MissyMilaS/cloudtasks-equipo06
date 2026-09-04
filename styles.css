@@ -1,0 +1,273 @@
+:root {
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --danger: #dc2626;
+  --danger-dark: #b91c1c;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: rgba(15, 23, 42, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg, #eff6ff, var(--bg));
+  color: var(--text);
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.card {
+  width: min(100%, 620px);
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px var(--shadow);
+  padding: 28px;
+}
+
+h1 {
+  margin: 0 0 24px;
+  text-align: center;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type='text'],
+input[type='date'] {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type='date'] {
+  min-width: 150px;
+  max-width: 190px;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+input[type='text']:focus,
+input[type='date']:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.98rem;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+#addTaskButton {
+  background: var(--primary);
+  color: white;
+  padding: 12px 20px;
+  font-weight: 700;
+}
+
+#addTaskButton:hover {
+  background: var(--primary-dark);
+}
+
+.error-message {
+  min-height: 20px;
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.summary {
+  margin: 18px 0 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+}
+
+.task.completed {
+  background: var(--success-soft);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.task.overdue {
+  background: #fef2f2;
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+.task-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.task-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.task-text {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.task.completed .task-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.due-date {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.due-date.overdue {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.status.pending {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.status.done {
+  background: var(--success-soft);
+  color: #166534;
+}
+
+.status.overdue {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.delete-btn {
+  background: var(--danger);
+  color: white;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+.delete-btn:hover {
+  background: var(--danger-dark);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 18px 12px;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (max-width: 520px) {
+  .card {
+    padding: 20px 16px;
+  }
+
+  .input-row,
+  .task {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  input[type='date'] {
+    max-width: none;
+    width: 100%;
+  }
+
+  .task-actions {
+    justify-content: space-between;
+  }
+
+  #addTaskButton {
+    width: 100%;
+  }
+}
