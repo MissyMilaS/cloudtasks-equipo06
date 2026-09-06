@@ -141,7 +141,7 @@
             <div class="task-meta">
               <span>${getStatusLabel(task.status)}</span>
               <span>${getPriorityLabel(task.priority)}</span>
-              ${task.deadline ? `<span>📅 ${formatDate(task.deadline)}</span>` : ''}
+              ${task.deadline ? `<span> ${formatDate(task.deadline)}</span>` : ''}
             </div>
           </div>
           <div class="task-footer">
@@ -308,33 +308,7 @@
   function initDemoTasks() {
     const now = Date.now();
     tasks = [
-      { 
-        id: nextId++, 
-        title: 'Revisar diseño', 
-        description: 'Verificar que los recuadros tengan sombra y bordes redondeados',
-        createdAt: now - 3600000 * 2,
-        deadline: new Date(now + 86400000 * 3).toISOString(),
-        priority: 'media',
-        status: 'en-progreso'
-      },
-      { 
-        id: nextId++, 
-        title: 'Escribir documentación', 
-        description: 'Preparar el readme del proyecto To-Do',
-        createdAt: now - 3600000 * 5,
-        deadline: new Date(now + 86400000 * 5).toISOString(),
-        priority: 'alta',
-        status: 'iniciado'
-      },
-      { 
-        id: nextId++, 
-        title: 'Hacer pruebas', 
-        description: 'Probar editar, eliminar, buscar y el modal de detalles',
-        createdAt: now - 3600000 * 24,
-        deadline: new Date(now - 3600000 * 2).toISOString(), // Vencida
-        priority: 'baja',
-        status: 'sin-empezar'
-      }
+      
     ];
     renderTasks();
     checkDeadlines();
