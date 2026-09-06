@@ -1,293 +1,324 @@
-let tasks = [];
-let nextId = 1;
+(function() {
+  // ===== ESTADO =====
+  let tasks = [];
+  let nextId = 1;
+  let currentFilter = '';
+  let editingId = null;
 
-const taskForm = document.getElementById('taskForm');
-const titleInput = document.getElementById('titleInput');
-const descriptionInput = document.getElementById('descriptionInput');
-const deadlineInput = document.getElementById('deadlineInput');
-const priorityInput = document.getElementById('priorityInput');
-const statusInput = document.getElementById('statusInput');
-const taskList = document.getElementById('taskList');
-const taskCount = document.getElementById('taskCount');
-const errorMessage = document.getElementById('errorMessage');
+  // ===== ELEMENTOS DOM =====
+  const tasksGrid = document.getElementById('tasksGrid');
+  const addBtn = document.getElementById('addTaskBtn');
+  const searchInput = document.getElementById('searchInput');
 
-function clearError() {
-  errorMessage.textContent = '';
-}
+  // Modal de creación/edición
+  const taskModal = document.getElementById('taskModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const taskForm = document.getElementById('taskForm');
+  const taskTitle = document.getElementById('taskTitle');
+  const taskDescription = document.getElementById('taskDescription');
+  const taskDeadline = document.getElementById('taskDeadline');
+  const taskPriority = document.getElementById('taskPriority');
+  const taskStatus = document.getElementById('taskStatus');
+  const closeTaskModalBtn = document.getElementById('closeTaskModalBtn');
+  const saveTaskBtn = document.getElementById('saveTaskBtn');
 
-function showError(message) {
-  errorMessage.textContent = message;
-}
+  // Modal de detalles
+  const detailModal = document.getElementById('detailModal');
+  const modalDetailTitle = document.getElementById('modalTitle');
+  const modalStatus = document.getElementById('modalStatus');
+  const modalDetail = document.getElementById('modalDetail');
+  const modalCreated = document.getElementById('modalCreated');
+  const modalDeadline = document.getElementById('modalDeadline');
+  const modalPriority = document.getElementById('modalPriority');
+  const closeModalBtn = document.getElementById('closeModalBtn');
 
-function escapeHtml(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-const STATUS_ORDER = {
-  Iniciado: 0,
-  'En proceso': 1,
-  Pendiente: 2,
-  Finalizada: 3,
-  'Sin completar': 4,
-};
-
-function getTaskStatus(task) {
-  if (task.completed) {
-    return 'Finalizada';
+  // ===== FUNCIONES AUXILIARES =====
+  function formatDate(ts) {
+    if (!ts) return 'Sin fecha';
+    const d = new Date(ts);
+    return d.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   }
 
-  if (task.deadline && new Date(`${task.deadline}T00:00:00`) < new Date(new Date().setHours(0, 0, 0, 0))) {
-    return 'Sin completar';
+  function formatDateInput(dateStr) {
+    if (!dateStr) return '';
+    return dateStr.slice(0, 16);
   }
 
-  return task.status || 'Pendiente';
-}
-
-function getStatusLabel(task) {
-  return getTaskStatus(task);
-}
-
-function validateTask(taskData) {
-  const title = taskData.title.trim();
-  const description = taskData.description.trim();
-  const priority = taskData.priority;
-  const deadline = taskData.deadline;
-  const status = taskData.status;
-
-  if (!title) {
-    return 'El título es obligatorio.';
+  function getStatusLabel(status) {
+    const labels = {
+      'sin-empezar': '⬜ Sin empezar',
+      'iniciado': '🟦 Iniciado',
+      'en-progreso': '🟨 En progreso',
+      'terminado': '✅ Terminado',
+      'sin-terminar': '❌ Sin terminar'
+    };
+    return labels[status] || status;
   }
 
-  if (title.length < 3 || title.length > 80) {
-    return 'El título debe tener entre 3 y 80 caracteres.';
+  function getPriorityLabel(priority) {
+    const labels = {
+      'baja': '🟢 Baja',
+      'media': '🟡 Media',
+      'alta': '🔴 Alta',
+      'urgente': '🟣 Urgente'
+    };
+    return labels[priority] || priority;
   }
 
-  if (!description) {
-    return 'La descripción es obligatoria.';
+  function getStatusClass(status) {
+    return `status-${status}`;
   }
 
-  if (description.length < 5 || description.length > 250) {
-    return 'La descripción debe tener entre 5 y 250 caracteres.';
+  function getPriorityClass(priority) {
+    return `priority-${priority}`;
   }
 
-  if (!priority) {
-    return 'Debes seleccionar una prioridad.';
+  function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
   }
 
-  if (!status) {
-    return 'Debes seleccionar un estado.';
+  // ===== VERIFICAR FECHAS LÍMITE =====
+  function checkDeadlines() {
+    const now = Date.now();
+    let updated = false;
+    
+    tasks.forEach(task => {
+      if (task.deadline && task.status !== 'terminado') {
+        const deadlineDate = new Date(task.deadline).getTime();
+        if (deadlineDate < now) {
+          task.status = 'sin-terminar';
+          updated = true;
+        }
+      }
+    });
+    
+    if (updated) {
+      renderTasks();
+    }
   }
 
-  if (!deadline) {
-    return 'La fecha límite es obligatoria.';
-  }
-
-  const selectedDate = new Date(`${deadline}T00:00:00`);
-
-  if (Number.isNaN(selectedDate.getTime())) {
-    return 'La fecha límite ingresada no es válida.';
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (selectedDate < today) {
-    return 'La fecha límite no puede ser anterior a hoy.';
-  }
-
-  return '';
-}
-
-function formatDate(dateString) {
-  if (!dateString) {
-    return 'Sin fecha límite';
-  }
-
-  const [year, month, day] = dateString.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-
-  return date.toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
-function formatDateTime(dateString) {
-  const date = new Date(dateString);
-
-  return date.toLocaleString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function isTaskOverdue(task) {
-  if (task.completed || !task.deadline) {
-    return false;
-  }
-
-  const deadlineDate = new Date(`${task.deadline}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return deadlineDate < today;
-}
-
-function sortTasks() {
-  const priorityOrder = {
-    alta: 0,
-    media: 1,
-    baja: 2,
-  };
-
-  tasks.sort((a, b) => {
-    const priorityDifference =
-      (priorityOrder[a.priority.toLowerCase()] ?? 99) -
-      (priorityOrder[b.priority.toLowerCase()] ?? 99);
-
-    if (priorityDifference !== 0) {
-      return priorityDifference;
+  // ===== RENDERIZAR TAREAS =====
+  function renderTasks() {
+    const filter = currentFilter.trim().toLowerCase();
+    let filtered = tasks;
+    if (filter !== '') {
+      filtered = tasks.filter(t => 
+        t.title.toLowerCase().includes(filter) || 
+        t.description.toLowerCase().includes(filter)
+      );
     }
 
-    const statusDifference =
-      (STATUS_ORDER[getTaskStatus(a)] ?? 99) -
-      (STATUS_ORDER[getTaskStatus(b)] ?? 99);
-
-    if (statusDifference !== 0) {
-      return statusDifference;
+    if (filtered.length === 0) {
+      tasksGrid.innerHTML = `<div class="empty-message">${tasks.length === 0 ? 'No hay tareas, añade una nueva' : 'No se encontraron tareas con ese filtro'}</div>`;
+      return;
     }
 
-    const dateDifference = new Date(a.deadline) - new Date(b.deadline);
+    let html = '';
+    for (const task of filtered) {
+      const isOverdue = task.deadline && 
+                       new Date(task.deadline).getTime() < Date.now() && 
+                       task.status !== 'terminado';
+      
+      html += `
+        <div class="task-card ${getPriorityClass(task.priority)} status-${task.status}" data-id="${task.id}">
+          <div>
+            <div class="task-title">${escapeHtml(task.title)} ${isOverdue ? '⚠️' : ''}</div>
+            <div class="task-preview">${escapeHtml(task.description)}</div>
+            <div class="task-meta">
+              <span>${getStatusLabel(task.status)}</span>
+              <span>${getPriorityLabel(task.priority)}</span>
+              ${task.deadline ? `<span> ${formatDate(task.deadline)}</span>` : ''}
+            </div>
+          </div>
+          <div class="task-footer">
+            <button class="btn-edit" data-id="${task.id}" data-action="edit"><i class="fas fa-pen"></i> Editar</button>
+            <button class="btn-delete" data-id="${task.id}" data-action="delete"><i class="fas fa-trash"></i> Eliminar</button>
+          </div>
+        </div>
+      `;
+    }
+    tasksGrid.innerHTML = html;
 
-    if (dateDifference !== 0) {
-      return dateDifference;
+    // Event listeners
+    document.querySelectorAll('.task-card').forEach(card => {
+      const id = parseInt(card.dataset.id);
+      card.addEventListener('click', function(e) {
+        if (e.target.closest('button')) return;
+        const task = tasks.find(t => t.id === id);
+        if (task) openDetailModal(task);
+      });
+    });
+
+    document.querySelectorAll('.task-footer button').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const id = parseInt(this.dataset.id);
+        const action = this.dataset.action;
+        const task = tasks.find(t => t.id === id);
+        if (!task) return;
+
+        if (action === 'delete') {
+          if (confirm(`¿Eliminar la tarea "${task.title}"?`)) {
+            tasks = tasks.filter(t => t.id !== id);
+            renderTasks();
+          }
+        } else if (action === 'edit') {
+          openTaskModal(task);
+        }
+      });
+    });
+  }
+
+  // ===== CREAR/EDITAR TAREA =====
+  function openTaskModal(task = null) {
+    editingId = task ? task.id : null;
+    taskForm.reset();
+
+    if (task) {
+      modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Tarea';
+      taskTitle.value = task.title;
+      taskDescription.value = task.description;
+      taskDeadline.value = formatDateInput(task.deadline);
+      taskPriority.value = task.priority || 'media';
+      taskStatus.value = task.status || 'sin-empezar';
+      saveTaskBtn.textContent = 'Actualizar';
+    } else {
+      modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Nueva Tarea';
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 7);
+      taskDeadline.value = defaultDate.toISOString().slice(0, 16);
+      taskStatus.value = 'sin-empezar';
+      saveTaskBtn.textContent = 'Guardar';
     }
 
-    return new Date(a.created_at) - new Date(b.created_at);
-  });
-}
-
-function mostrarTareas() {
-  sortTasks();
-  taskList.innerHTML = '';
-  taskCount.textContent = `${tasks.length} ${tasks.length === 1 ? 'tarea' : 'tareas'}`;
-
-  if (tasks.length === 0) {
-    const emptyItem = document.createElement('li');
-    emptyItem.className = 'empty-state';
-    emptyItem.textContent = 'No hay tareas registradas aún.';
-    taskList.appendChild(emptyItem);
-    return;
+    taskModal.classList.add('active');
   }
 
-  tasks.forEach((task) => {
-    const item = document.createElement('li');
-    const overdue = getTaskStatus(task) === 'Sin completar';
-    item.className = `task ${task.completed ? 'completed' : ''} ${overdue ? 'overdue' : ''}`;
-
-    const taskInfo = document.createElement('div');
-    taskInfo.className = 'task-info';
-
-    const taskHeader = document.createElement('div');
-    taskHeader.className = 'task-header';
-
-    const title = document.createElement('h3');
-    title.className = 'task-title';
-    title.textContent = escapeHtml(task.title);
-
-    const priority = document.createElement('span');
-    const priorityText = task.priority.toLowerCase();
-    priority.className = `priority ${priorityText}`;
-    priority.textContent = task.priority;
-
-    taskHeader.appendChild(title);
-    taskHeader.appendChild(priority);
-
-    const description = document.createElement('p');
-    description.className = 'task-description';
-    description.textContent = task.description;
-
-    const meta = document.createElement('div');
-    meta.className = 'task-meta';
-
-    const idMeta = document.createElement('span');
-    idMeta.textContent = `ID: #${task.id}`;
-
-    const createdMeta = document.createElement('span');
-    createdMeta.textContent = `Creada: ${formatDateTime(task.created_at)}`;
-
-    const deadlineMeta = document.createElement('span');
-    deadlineMeta.textContent = `Límite: ${formatDate(task.deadline)}`;
-
-    const statusMeta = document.createElement('span');
-    statusMeta.textContent = `Estado: ${getTaskStatus(task)}`;
-
-    meta.appendChild(idMeta);
-    meta.appendChild(createdMeta);
-    meta.appendChild(deadlineMeta);
-    meta.appendChild(statusMeta);
-
-    taskInfo.appendChild(taskHeader);
-    taskInfo.appendChild(description);
-    taskInfo.appendChild(meta);
-
-    const taskActions = document.createElement('div');
-    taskActions.className = 'task-actions';
-
-    const status = document.createElement('span');
-    const statusLabel = getStatusLabel(task);
-    status.className = `status ${task.completed ? 'done' : overdue ? 'overdue' : 'pending'}`;
-    status.textContent = statusLabel;
-
-    const toggleButton = document.createElement('button');
-    toggleButton.type = 'button';
-    toggleButton.className = 'toggle-btn';
-    toggleButton.textContent = task.completed ? 'Marcar pendiente' : 'Completar';
-    toggleButton.addEventListener('click', () => completarTarea(task.id));
-
-    const deleteButton = document.createElement('button');
-    deleteButton.type = 'button';
-    deleteButton.className = 'delete-btn';
-    deleteButton.textContent = 'Eliminar';
-    deleteButton.addEventListener('click', () => eliminarTarea(task.id));
-
-    taskActions.appendChild(status);
-    taskActions.appendChild(toggleButton);
-    taskActions.appendChild(deleteButton);
-
-    item.appendChild(taskInfo);
-    item.appendChild(taskActions);
-    taskList.appendChild(item);
-  });
-}
-
-function completarTarea(id) {
-  const task = tasks.find((item) => item.id === id);
-
-  if (!task) {
-    return;
+  function closeTaskModal() {
+    taskModal.classList.remove('active');
+    editingId = null;
+    taskForm.reset();
   }
 
-  task.completed = !task.completed;
-  task.status = task.completed ? 'Finalizada' : (task.deadline && new Date(`${task.deadline}T00:00:00`) < new Date(new Date().setHours(0, 0, 0, 0)) ? 'Sin completar' : 'Pendiente');
-  mostrarTareas();
-}
+  // ===== GUARDAR TAREA =====
+  taskForm.addEventListener('submit', function(e) {
+    e.preventDefault();
 
-function eliminarTarea(id) {
-  tasks = tasks.filter((task) => task.id !== id);
-  mostrarTareas();
-}
+    const title = taskTitle.value.trim();
+    if (!title) {
+      alert('El título es obligatorio');
+      return;
+    }
 
-taskForm.addEventListener('submit', crearTarea);
-taskForm.addEventListener('reset', clearError);
+    const deadline = taskDeadline.value;
+    if (!deadline) {
+      alert('La fecha límite es obligatoria');
+      return;
+    }
 
-mostrarTareas();
+    const taskData = {
+      title: title,
+      description: taskDescription.value.trim() || 'Sin descripción',
+      deadline: deadline,
+      priority: taskPriority.value,
+      status: taskStatus.value
+    };
+
+    if (editingId) {
+      const index = tasks.findIndex(t => t.id === editingId);
+      if (index !== -1) {
+        tasks[index] = { ...tasks[index], ...taskData };
+      }
+    } else {
+      const newTask = {
+        id: nextId++,
+        ...taskData,
+        createdAt: Date.now()
+      };
+      tasks.push(newTask);
+    }
+
+    closeTaskModal();
+    renderTasks();
+    checkDeadlines();
+  });
+
+  // ===== ABRIR MODAL DE DETALLES =====
+  function openDetailModal(task) {
+    modalDetailTitle.textContent = escapeHtml(task.title);
+    modalStatus.textContent = getStatusLabel(task.status);
+    modalStatus.className = `detail-status ${getStatusClass(task.status)}`;
+    modalDetail.textContent = escapeHtml(task.description);
+    modalCreated.textContent = task.createdAt ? formatDate(task.createdAt) : 'Sin fecha';
+    modalDeadline.textContent = task.deadline ? formatDate(task.deadline) : 'Sin fecha';
+    modalPriority.textContent = getPriorityLabel(task.priority);
+    detailModal.classList.add('active');
+  }
+
+  function closeDetailModal() {
+    detailModal.classList.remove('active');
+  }
+
+  // ===== AÑADIR TAREA (desde el botón) =====
+  function addTask() {
+    openTaskModal(); // Simplemente abre el modal vacío
+  }
+
+  // ===== EVENTOS =====
+  addBtn.addEventListener('click', addTask);
+
+  searchInput.addEventListener('input', function() {
+    currentFilter = this.value;
+    renderTasks();
+  });
+
+  closeModalBtn.addEventListener('click', closeDetailModal);
+  closeTaskModalBtn.addEventListener('click', closeTaskModal);
+
+  // Cerrar modales al hacer clic fuera
+  detailModal.addEventListener('click', function(e) {
+    if (e.target === this) closeDetailModal();
+  });
+  taskModal.addEventListener('click', function(e) {
+    if (e.target === this) closeTaskModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (detailModal.classList.contains('active')) closeDetailModal();
+      if (taskModal.classList.contains('active')) closeTaskModal();
+    }
+  });
+
+  // ===== INICIALIZAR CON TAREAS DE EJEMPLO =====
+  function initDemoTasks() {
+    const now = Date.now();
+    tasks = [
+      
+    ];
+    renderTasks();
+    checkDeadlines();
+  }
+  
+  initDemoTasks();
+
+  // Verificar fechas cada 60 segundos
+  setInterval(checkDeadlines, 60000);
+
+  // Exponer para debug
+  window.__tasks = tasks;
+})();

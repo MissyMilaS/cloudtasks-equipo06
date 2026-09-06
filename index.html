@@ -1,86 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CloudTasks</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="app">
-      <section class="card">
-        <header class="app-header">
-          <h1>CloudTasks</h1>
-          <p>Organiza tus pendientes con prioridad, fecha límite y estado.</p>
-        </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudTasks</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
 
-        <form id="taskForm" novalidate>
-          <div class="form-grid">
-            <div class="field">
-              <label for="titleInput">Título</label>
-              <input
-                id="titleInput"
-                name="title"
-                type="text"
-                maxlength="80"
-                placeholder="Ej. Revisar entrega final"
-                aria-describedby="errorMessage"
-              />
-            </div>
+<div class="app-container">
+  <h1><i class="fas fa-check-circle"></i> Mis tareas</h1>
 
-            <div class="field">
-              <label for="priorityInput">Prioridad</label>
-              <select id="priorityInput" name="priority">
-                <option value="">Selecciona una prioridad</option>
-                <option value="Alta">Alta</option>
-                <option value="Media">Media</option>
-                <option value="Baja">Baja</option>
-              </select>
-            </div>
+  <!-- BARRA SUPERIOR: solo buscar + añadir -->
+  <div class="top-bar">
+    <div class="input-group" style="flex: 2;">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Buscar tarea..." />
+    </div>
+    <button class="btn" id="addTaskBtn"><i class="fas fa-plus"></i> Añadir tarea</button>
+  </div>
 
-            <div class="field">
-              <label for="statusInput">Estado</label>
-              <select id="statusInput" name="status">
-                <option value="Pendiente">Pendiente</option>
-                <option value="En proceso">En proceso</option>
-                <option value="Iniciado">Iniciado</option>
-                <option value="Finalizada">Finalizada</option>
-              </select>
-            </div>
+  <!-- LISTA DE TAREAS -->
+  <div class="tasks-grid" id="tasksGrid">
+    <div class="empty-message">No hay tareas, añade una nueva</div>
+  </div>
+</div>
 
-            <div class="field field-full">
-              <label for="descriptionInput">Descripción</label>
-              <textarea
-                id="descriptionInput"
-                name="description"
-                rows="4"
-                maxlength="250"
-                placeholder="Describe la tarea con detalle..."
-              ></textarea>
-            </div>
+<!-- MODAL PARA CREAR/EDITAR TAREA -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal-box modal-large">
+    <h2 id="modalTitle"><i class="fas fa-plus-circle"></i> Nueva Tarea</h2>
+    <form id="taskForm">
+      <div class="form-group">
+        <label for="taskTitle">Título</label>
+        <input type="text" id="taskTitle" required placeholder="Ej: Terminar proyecto" />
+      </div>
 
-            <div class="field">
-              <label for="deadlineInput">Fecha límite</label>
-              <input id="deadlineInput" name="deadline" type="date" />
-            </div>
-          </div>
+      <div class="form-group">
+        <label for="taskDescription">Descripción</label>
+        <textarea id="taskDescription" rows="3" placeholder="Descripción detallada de la tarea..."></textarea>
+      </div>
 
-          <div class="form-actions">
-            <button type="submit" id="addTaskButton">Crear tarea</button>
-            <button type="reset" class="secondary-btn">Limpiar</button>
-          </div>
-
-          <p id="errorMessage" class="error-message" aria-live="polite"></p>
-        </form>
-
-        <div class="summary">
-          <span id="taskCount">0 tareas</span>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="taskDeadline">Fecha Límite</label>
+          <input type="datetime-local" id="taskDeadline" required />
         </div>
+        <div class="form-group">
+          <label for="taskPriority">Prioridad</label>
+          <select id="taskPriority">
+            <option value="baja">🟢 Baja</option>
+            <option value="media" selected>🟡 Media</option>
+            <option value="alta">🔴 Alta</option>
+            <option value="urgente">🟣 Urgente</option>
+          </select>
+        </div>
+      </div>
 
-        <ul id="taskList" class="task-list" aria-live="polite"></ul>
-      </section>
-    </main>
+      <div class="form-group">
+        <label for="taskStatus">Estado</label>
+        <select id="taskStatus">
+          <option value="sin-empezar">⬜ Sin empezar</option>
+          <option value="iniciado">🟦 Iniciado</option>
+          <option value="en-progreso">🟨 En progreso</option>
+          <option value="terminado">✅ Terminado</option>
+          <option value="sin-terminar">❌ Sin terminar</option>
+        </select>
+      </div>
 
-    <script src="js/app.js"></script>
-  </body>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="closeTaskModalBtn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="saveTaskBtn"><i class="fas fa-save"></i> Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL DE DETALLES -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="detail-header">
+      <h3 id="modalTitle">Título</h3>
+      <span class="detail-status" id="modalStatus">✅ Terminado</span>
+    </div>
+    <div class="modal-detail" id="modalDetail">Descripción detallada de la tarea.</div>
+    <div class="modal-meta" id="modalMeta">
+      <span><i class="fas fa-calendar"></i> Creada: <span id="modalCreated"></span></span>
+      <span><i class="fas fa-hourglass-end"></i> Límite: <span id="modalDeadline"></span></span>
+      <span><i class="fas fa-flag"></i> Prioridad: <span id="modalPriority"></span></span>
+    </div>
+    <button class="btn-close-modal" id="closeModalBtn"><i class="fas fa-chevron-left"></i> Cerrar detalles</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
 </html>

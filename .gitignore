@@ -1,0 +1,14 @@
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# Dependencias futuras
+node_modules/
+
+# Variables de entorno y secretos
+.env
+.env.*
