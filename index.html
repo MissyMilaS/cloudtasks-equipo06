@@ -10,9 +10,19 @@
 <body>
 
 <div class="app-container">
+  <h1 class="brand-title"><span class="title">CloudTasks</span></h1>
   <h1><i class="fas fa-check-circle"></i> Mis tareas</h1>
 
   <!-- BARRA SUPERIOR: solo buscar + añadir -->
+  <div class="search-filters" aria-label="Filtros de estado">
+    <button class="status-filter active" data-filter="all">Todas</button>
+    <button class="status-filter" data-filter="sin-empezar">Sin empezar</button>
+    <button class="status-filter" data-filter="iniciado">Iniciado</button>
+    <button class="status-filter" data-filter="en-progreso">En progreso</button>
+    <button class="status-filter" data-filter="terminado">Completadas</button>
+    <button class="status-filter" data-filter="sin-terminar">Retrasadas</button>
+  </div>
+
   <div class="top-bar">
     <div class="input-group" style="flex: 2;">
       <i class="fas fa-search"></i>
