@@ -13,20 +13,35 @@
   <h1 class="brand-title"><span class="title">CloudTasks</span></h1>
   <h1><i class="fas fa-check-circle"></i> Mis tareas</h1>
 
-  <!-- BARRA SUPERIOR: solo buscar + añadir -->
-  <div class="search-filters" aria-label="Filtros de estado">
-    <button class="status-filter active" data-filter="all">Todas</button>
-    <button class="status-filter" data-filter="sin-empezar">Sin empezar</button>
-    <button class="status-filter" data-filter="iniciado">Iniciado</button>
-    <button class="status-filter" data-filter="en-progreso">En progreso</button>
-    <button class="status-filter" data-filter="terminado">Completadas</button>
-    <button class="status-filter" data-filter="sin-terminar">Retrasadas</button>
-  </div>
-
   <div class="top-bar">
     <div class="input-group" style="flex: 2;">
       <i class="fas fa-search"></i>
       <input type="text" id="searchInput" placeholder="Buscar tarea..." />
+    </div>
+    <div class="state-filter" id="stateFilter">
+      <button class="state-filter-btn" id="stateFilterBtn" type="button" aria-expanded="false">
+        <i class="fas fa-flag"></i> <span id="stateFilterLabel">Estado</span> <i class="fas fa-chevron-down"></i>
+      </button>
+      <div class="state-menu" id="stateMenu" hidden>
+        <label class="state-option"><input type="checkbox" value="sin-empezar"> <span>⬜ Sin empezar</span></label>
+        <label class="state-option"><input type="checkbox" value="iniciado"> <span>🟦 Iniciado</span></label>
+        <label class="state-option"><input type="checkbox" value="en-progreso"> <span>🟨 En progreso</span></label>
+        <label class="state-option"><input type="checkbox" value="terminado"> <span>🟩 Completado</span></label>
+        <label class="state-option"><input type="checkbox" value="sin-terminar"> <span>🟥 Retrasado</span></label>
+        <button class="state-clear" id="clearStateFilter" type="button">Limpiar</button>
+      </div>
+    </div>
+    <div class="priority-filter" id="priorityFilter">
+      <button class="priority-filter-btn" id="priorityFilterBtn" type="button" aria-expanded="false">
+        <i class="fas fa-flag"></i> <span id="priorityFilterLabel">Prioridad</span> <i class="fas fa-chevron-down"></i>
+      </button>
+      <div class="priority-menu" id="priorityMenu" hidden>
+        <label class="priority-option"><input type="checkbox" value="baja"> <span>🟢 Baja</span></label>
+        <label class="priority-option"><input type="checkbox" value="media"> <span>🟡 Media</span></label>
+        <label class="priority-option"><input type="checkbox" value="alta"> <span>🔴 Alta</span></label>
+        <label class="priority-option"><input type="checkbox" value="urgente"> <span>🟣 Urgente</span></label>
+        <button class="priority-clear" id="clearPriorityFilter" type="button">Limpiar</button>
+      </div>
     </div>
     <button class="btn" id="addTaskBtn"><i class="fas fa-plus"></i> Añadir tarea</button>
   </div>
@@ -49,7 +64,7 @@
 
       <div class="form-group">
         <label for="taskDescription">Descripción</label>
-        <textarea id="taskDescription" rows="3" placeholder="Descripción detallada de la tarea..."></textarea>
+        <textarea id="taskDescription" rows="3" required placeholder="Descripción detallada de la tarea..."></textarea>
       </div>
 
       <div class="form-row">
@@ -59,9 +74,10 @@
         </div>
         <div class="form-group">
           <label for="taskPriority">Prioridad</label>
-          <select id="taskPriority">
+          <select id="taskPriority" required>
+            <option value="" selected disabled>Selecciona una prioridad</option>
             <option value="baja">🟢 Baja</option>
-            <option value="media" selected>🟡 Media</option>
+            <option value="media">🟡 Media</option>
             <option value="alta">🔴 Alta</option>
             <option value="urgente">🟣 Urgente</option>
           </select>
@@ -91,7 +107,7 @@
 <div class="modal-overlay" id="detailModal">
   <div class="modal-box">
     <div class="detail-header">
-      <h3 id="modalTitle">Título</h3>
+      <h3 id="modalDetailTitle">Título</h3>
       <span class="detail-status" id="modalStatus">✅ Terminado</span>
     </div>
     <div class="modal-detail" id="modalDetail">Descripción detallada de la tarea.</div>

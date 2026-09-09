@@ -58,32 +58,6 @@ h1 i {
   transform-origin: center;
 }
 
-/* ----- BARRA SUPERIOR: solo buscar + añadir ----- */
-.search-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 1rem;
-}
-
-.status-filter {
-  border: 1px solid #d8e3ef;
-  background: #f5f9fd;
-  color: #34506b;
-  border-radius: 999px;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.status-filter.active {
-  background: #2a7f9c;
-  color: white;
-  border-color: #2a7f9c;
-}
-
 .top-bar {
   display: flex;
   flex-wrap: wrap;
@@ -149,12 +123,154 @@ h1 i {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+.priority-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.state-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.priority-filter-btn,
+.state-filter-btn {
+  border: 1px solid #d8e3ef;
+  background: #f5f9fd;
+  color: #34506b;
+  border-radius: 40px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.priority-filter-btn:hover,
+.priority-filter-btn[aria-expanded="true"],
+.state-filter-btn:hover,
+.state-filter-btn[aria-expanded="true"] {
+  background: #e8f0f7;
+  border-color: #2a7f9c;
+  color: #1a2e3f;
+}
+
+.priority-filter-btn .fa-chevron-down,
+.state-filter-btn .fa-chevron-down {
+  font-size: 0.7rem;
+}
+
+.priority-menu,
+.state-menu {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 20;
+  min-width: 190px;
+  padding: 0.45rem;
+  background: white;
+  border: 1px solid #d8e3ef;
+  border-radius: 1rem;
+  box-shadow: 0 8px 18px rgba(0, 20, 30, 0.14);
+}
+
+.priority-option,
+.state-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.65rem;
+  border-radius: 0.65rem;
+  color: #34506b;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.priority-option:hover,
+.state-option:hover {
+  background: #f0f5fa;
+}
+
+.priority-option input,
+.state-option input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #2a7f9c;
+  cursor: pointer;
+}
+
+.priority-clear,
+.state-clear {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.55rem;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  background: transparent;
+  color: #2a7f9c;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.priority-clear:hover,
+.state-clear:hover {
+  color: #1a2e3f;
+}
+
 /* ----- LISTA DE TAREAS (una columna) ----- */
 .tasks-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+.task-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.section-header {
+  border: none;
+  background: rgba(255, 255, 255, 0.75);
+  color: #1a2e3f;
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header:hover {
+  background: white;
+}
+
+.section-arrow {
+  width: 1rem;
+  color: #2a7f9c;
+  font-size: 0.8rem;
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-section:not(.is-open) .section-content {
+  display: none;
 }
 
 /* Cada recuadro es un botón (click → detalles) */
@@ -542,6 +658,9 @@ h1 i {
 @media (max-width: 600px) {
   .app-container { padding: 1.2rem; }
   .top-bar { flex-direction: column; border-radius: 2rem; padding: 1rem; }
+  .priority-filter { width: 100%; }
+  .priority-filter-btn { width: 100%; justify-content: center; }
+  .priority-menu { left: 0; right: 0; }
   .top-bar .btn { justify-content: center; }
   .form-row { grid-template-columns: 1fr; }
   .task-card { flex-direction: column; align-items: stretch; }

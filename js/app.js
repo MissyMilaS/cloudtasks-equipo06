@@ -3,14 +3,31 @@
   let tasks = [];
   let nextId = 1;
   let currentFilter = '';
-  let currentStatusFilter = 'all';
+  let selectedPriorities = [];
+  let selectedStates = [];
   let editingId = null;
+  const sectionOpen = {
+    overdue: true,
+    upcoming: true,
+    completed: true
+  };
 
   // ===== ELEMENTOS DOM =====
   const tasksGrid = document.getElementById('tasksGrid');
   const addBtn = document.getElementById('addTaskBtn');
   const searchInput = document.getElementById('searchInput');
-  const statusFilters = document.querySelectorAll('.status-filter');
+  const priorityFilter = document.getElementById('priorityFilter');
+  const priorityFilterBtn = document.getElementById('priorityFilterBtn');
+  const priorityFilterLabel = document.getElementById('priorityFilterLabel');
+  const priorityMenu = document.getElementById('priorityMenu');
+  const priorityOptions = priorityMenu.querySelectorAll('input[type="checkbox"]');
+  const clearPriorityFilter = document.getElementById('clearPriorityFilter');
+  const stateFilter = document.getElementById('stateFilter');
+  const stateFilterBtn = document.getElementById('stateFilterBtn');
+  const stateFilterLabel = document.getElementById('stateFilterLabel');
+  const stateMenu = document.getElementById('stateMenu');
+  const stateOptions = stateMenu.querySelectorAll('input[type="checkbox"]');
+  const clearStateFilter = document.getElementById('clearStateFilter');
 
   // Modal de creación/edición
   const taskModal = document.getElementById('taskModal');
@@ -26,7 +43,7 @@
 
   // Modal de detalles
   const detailModal = document.getElementById('detailModal');
-  const modalDetailTitle = document.getElementById('modalTitle');
+  const modalDetailTitle = document.getElementById('modalDetailTitle');
   const modalStatus = document.getElementById('modalStatus');
   const modalDetail = document.getElementById('modalDetail');
   const modalCreated = document.getElementById('modalCreated');
@@ -218,18 +235,76 @@
     }
   }
 
+  const priorityOrder = {
+    urgente: 4,
+    alta: 3,
+    media: 2,
+    baja: 1
+  };
+
+  function sortTasks(taskList) {
+    return taskList
+      .map((task, index) => ({ task, index }))
+      .sort((a, b) => {
+        const deadlineA = a.task.deadline ? new Date(a.task.deadline).getTime() : Infinity;
+        const deadlineB = b.task.deadline ? new Date(b.task.deadline).getTime() : Infinity;
+        const deadlineDifference = deadlineA - deadlineB;
+
+        if (deadlineDifference !== 0) return deadlineDifference;
+
+        const priorityDifference = (priorityOrder[b.task.priority] || 0) - (priorityOrder[a.task.priority] || 0);
+        return priorityDifference || a.index - b.index;
+      })
+      .map(({ task }) => task);
+  }
+
+  function getTaskSection(task) {
+    if (task.completed === true || task.status === 'terminado') return 'completed';
+    return isTaskOverdue(task) ? 'overdue' : 'upcoming';
+  }
+
+  function renderTaskCard(task) {
+    const currentTask = normalizeTaskState(task);
+    const isCompleted = currentTask.completed === true || currentTask.status === 'terminado';
+    const isOverdue = isTaskOverdue(currentTask);
+    const state = getTaskState(currentTask);
+
+    return `
+      <div class="task-card ${getPriorityClass(currentTask.priority)} ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${currentTask.id}">
+        <div class="task-main">
+          <label class="task-check-wrap">
+            <input type="checkbox" class="task-check" data-id="${currentTask.id}" ${isCompleted ? 'checked' : ''}>
+          </label>
+          <div class="task-content">
+            <div class="task-title-row">
+              <div class="task-title ${isCompleted ? 'completed' : ''}">${escapeHtml(currentTask.title)}</div>
+              <div class="task-state-group">
+                <span class="task-state ${state.className}">${state.label}</span>
+                ${state.delayLabel ? `<span class="task-state ${state.delayClass}">${state.delayLabel}</span>` : ''}
+              </div>
+            </div>
+            <div class="task-preview">${escapeHtml(currentTask.description)}</div>
+            <div class="task-meta">
+              <span><strong>Fecha límite:</strong> ${formatDeadline(currentTask.deadline)}</span>
+              <span>${getPriorityLabel(currentTask.priority)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="task-footer">
+          <button class="btn-edit" data-id="${currentTask.id}" data-action="edit"><i class="fas fa-pen"></i> Editar</button>
+          <button class="btn-delete" data-id="${currentTask.id}" data-action="delete"><i class="fas fa-trash"></i> Eliminar</button>
+        </div>
+      </div>
+    `;
+  }
+
   // ===== RENDERIZAR TAREAS =====
   function renderTasks() {
     const filter = currentFilter.trim().toLowerCase();
     let filtered = tasks;
 
-    if (currentStatusFilter !== 'all') {
-      filtered = filtered.filter(t => {
-        const normalized = normalizeTaskState({ ...t });
-        if (currentStatusFilter === 'terminado') return normalized.status === 'terminado';
-        if (currentStatusFilter === 'sin-terminar') return normalized.status === 'sin-terminar';
-        return normalized.status === currentStatusFilter;
-      });
+    if (selectedStates.length > 0) {
+      filtered = filtered.filter(task => selectedStates.includes(task.status));
     }
 
     if (filter !== '') {
@@ -239,47 +314,43 @@
       );
     }
 
+    if (selectedPriorities.length > 0) {
+      filtered = filtered.filter(task => selectedPriorities.includes(task.priority));
+    }
+
+    const sections = {
+      overdue: sortTasks(filtered.filter(task => getTaskSection(task) === 'overdue')),
+      upcoming: sortTasks(filtered.filter(task => getTaskSection(task) === 'upcoming')),
+      completed: sortTasks(filtered.filter(task => getTaskSection(task) === 'completed'))
+    };
+
     if (filtered.length === 0) {
       tasksGrid.innerHTML = `<div class="empty-message">${tasks.length === 0 ? 'No hay tareas, añade una nueva' : 'No se encontraron tareas con ese filtro'}</div>`;
       return;
     }
 
-    let html = '';
-    for (const task of filtered) {
-      const currentTask = normalizeTaskState(task);
-      const isCompleted = currentTask.completed === true || currentTask.status === 'terminado';
-      const isOverdue = isTaskOverdue(currentTask);
-      const state = getTaskState(currentTask);
+    const sectionLabels = {
+      overdue: '⚠️ Vencidas',
+      upcoming: '📅 Próximas',
+      completed: '✅ Completadas'
+    };
+    tasksGrid.innerHTML = Object.entries(sections).map(([key, sectionTasks]) => `
+      <section class="task-section ${sectionOpen[key] ? 'is-open' : ''}" data-section="${key}">
+        <button class="section-header" type="button" aria-expanded="${sectionOpen[key]}">
+          <span class="section-arrow">${sectionOpen[key] ? '▼' : '▶'}</span>
+          <span>${sectionLabels[key]} (${sectionTasks.length})</span>
+        </button>
+        <div class="section-content">${sectionTasks.map(renderTaskCard).join('')}</div>
+      </section>
+    `).join('');
 
-      html += `
-        <div class="task-card ${getPriorityClass(currentTask.priority)} ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${currentTask.id}">
-          <div class="task-main">
-            <label class="task-check-wrap">
-              <input type="checkbox" class="task-check" data-id="${currentTask.id}" ${isCompleted ? 'checked' : ''}>
-            </label>
-            <div class="task-content">
-              <div class="task-title-row">
-                <div class="task-title ${isCompleted ? 'completed' : ''}">${escapeHtml(currentTask.title)}</div>
-                <div class="task-state-group">
-                  <span class="task-state ${state.className}">${state.label}</span>
-                  ${state.delayLabel ? `<span class="task-state ${state.delayClass}">${state.delayLabel}</span>` : ''}
-                </div>
-              </div>
-              <div class="task-preview">${escapeHtml(currentTask.description)}</div>
-              <div class="task-meta">
-                <span><strong>Fecha límite:</strong> ${formatDeadline(currentTask.deadline)}</span>
-                <span>${getPriorityLabel(currentTask.priority)}</span>
-              </div>
-            </div>
-          </div>
-          <div class="task-footer">
-            <button class="btn-edit" data-id="${currentTask.id}" data-action="edit"><i class="fas fa-pen"></i> Editar</button>
-            <button class="btn-delete" data-id="${currentTask.id}" data-action="delete"><i class="fas fa-trash"></i> Eliminar</button>
-          </div>
-        </div>
-      `;
-    }
-    tasksGrid.innerHTML = html;
+    document.querySelectorAll('.section-header').forEach(header => {
+      header.addEventListener('click', function() {
+        const section = this.closest('.task-section').dataset.section;
+        sectionOpen[section] = !sectionOpen[section];
+        renderTasks();
+      });
+    });
 
     // Event listeners
     document.querySelectorAll('.task-card').forEach(card => {
@@ -372,17 +443,29 @@
       return;
     }
 
+    const description = taskDescription.value.trim();
+    if (!description) {
+      alert('La descripción es obligatoria');
+      return;
+    }
+
     const deadline = taskDeadline.value;
     if (!deadline) {
       alert('La fecha límite es obligatoria');
       return;
     }
 
+    const priority = taskPriority.value;
+    if (!priority) {
+      alert('La prioridad es obligatoria');
+      return;
+    }
+
     const taskData = {
       title: title,
-      description: taskDescription.value.trim() || 'Sin descripción',
+      description: description,
       deadline: deadline,
-      priority: taskPriority.value,
+      priority: priority,
       completed: false,
       status: 'sin-empezar'
     };
@@ -445,12 +528,69 @@
     renderTasks();
   });
 
-  statusFilters.forEach(button => {
-    button.addEventListener('click', function() {
-      currentStatusFilter = this.dataset.filter;
-      statusFilters.forEach(item => item.classList.toggle('active', item === this));
-      renderTasks();
+  function updatePriorityFilter() {
+    selectedPriorities = Array.from(priorityOptions)
+      .filter(option => option.checked)
+      .map(option => option.value);
+    priorityFilterLabel.textContent = selectedPriorities.length > 0
+      ? `Prioridad (${selectedPriorities.length})`
+      : 'Prioridad';
+    renderTasks();
+  }
+
+  priorityFilterBtn.addEventListener('click', function() {
+    const isOpen = !priorityMenu.hidden;
+    priorityMenu.hidden = isOpen;
+    priorityFilterBtn.setAttribute('aria-expanded', String(!isOpen));
+  });
+
+  priorityOptions.forEach(option => {
+    option.addEventListener('change', updatePriorityFilter);
+  });
+
+  clearPriorityFilter.addEventListener('click', function() {
+    priorityOptions.forEach(option => {
+      option.checked = false;
     });
+    updatePriorityFilter();
+  });
+
+  function updateStateFilter() {
+    selectedStates = Array.from(statusOptions)
+      .filter(option => option.checked)
+      .map(option => option.value);
+    stateFilterLabel.textContent = selectedStates.length > 0
+      ? `Estado (${selectedStates.length})`
+      : 'Estado';
+    renderTasks();
+  }
+
+  stateFilterBtn.addEventListener('click', function() {
+    const isOpen = !stateMenu.hidden;
+    stateMenu.hidden = isOpen;
+    stateFilterBtn.setAttribute('aria-expanded', String(!isOpen));
+  });
+
+  stateOptions.forEach(option => {
+    option.addEventListener('change', updateStateFilter);
+  });
+
+  clearStateFilter.addEventListener('click', function() {
+    stateOptions.forEach(option => {
+      option.checked = false;
+    });
+    updateStateFilter();
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!priorityFilter.contains(e.target)) {
+      priorityMenu.hidden = true;
+      priorityFilterBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (!stateFilter.contains(e.target)) {
+      stateMenu.hidden = true;
+      stateFilterBtn.setAttribute('aria-expanded', 'false');
+    }
   });
 
   closeModalBtn.addEventListener('click', closeDetailModal);
