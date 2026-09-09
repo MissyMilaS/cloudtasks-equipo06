@@ -41,7 +41,23 @@ h1 i {
   font-size: 1.8rem;
 }
 
-/* ----- BARRA SUPERIOR: solo buscar + añadir ----- */
+.brand-title {
+  display: block;
+  text-align: center;
+  margin: 0 0 1rem;
+}
+
+.brand-title .title {
+  display: inline-block;
+  font-size: 3.2rem;
+  color: #2a7f9c;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -1px;
+  transform: skewX(-8deg);
+  transform-origin: center;
+}
+
 .top-bar {
   display: flex;
   flex-wrap: wrap;
@@ -107,12 +123,154 @@ h1 i {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+.priority-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.state-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.priority-filter-btn,
+.state-filter-btn {
+  border: 1px solid #d8e3ef;
+  background: #f5f9fd;
+  color: #34506b;
+  border-radius: 40px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.priority-filter-btn:hover,
+.priority-filter-btn[aria-expanded="true"],
+.state-filter-btn:hover,
+.state-filter-btn[aria-expanded="true"] {
+  background: #e8f0f7;
+  border-color: #2a7f9c;
+  color: #1a2e3f;
+}
+
+.priority-filter-btn .fa-chevron-down,
+.state-filter-btn .fa-chevron-down {
+  font-size: 0.7rem;
+}
+
+.priority-menu,
+.state-menu {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 20;
+  min-width: 190px;
+  padding: 0.45rem;
+  background: white;
+  border: 1px solid #d8e3ef;
+  border-radius: 1rem;
+  box-shadow: 0 8px 18px rgba(0, 20, 30, 0.14);
+}
+
+.priority-option,
+.state-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.65rem;
+  border-radius: 0.65rem;
+  color: #34506b;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.priority-option:hover,
+.state-option:hover {
+  background: #f0f5fa;
+}
+
+.priority-option input,
+.state-option input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #2a7f9c;
+  cursor: pointer;
+}
+
+.priority-clear,
+.state-clear {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.55rem;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  background: transparent;
+  color: #2a7f9c;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.priority-clear:hover,
+.state-clear:hover {
+  color: #1a2e3f;
+}
+
 /* ----- LISTA DE TAREAS (una columna) ----- */
 .tasks-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+.task-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.section-header {
+  border: none;
+  background: rgba(255, 255, 255, 0.75);
+  color: #1a2e3f;
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header:hover {
+  background: white;
+}
+
+.section-arrow {
+  width: 1rem;
+  color: #2a7f9c;
+  font-size: 0.8rem;
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-section:not(.is-open) .section-content {
+  display: none;
 }
 
 /* Cada recuadro es un botón (click → detalles) */
@@ -136,6 +294,17 @@ h1 i {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.task-card.overdue {
+  background: #fff3f3;
+  border-left-color: #ef4444;
+}
+
+.task-card.completed {
+  opacity: 0.8;
+  background: #edf1f4;
+  border-left-color: #9aa9b8;
+}
+
 /* Colores por prioridad */
 .task-card.priority-baja { border-left-color: #48bb78; }
 .task-card.priority-media { border-left-color: #ecc94b; }
@@ -147,6 +316,64 @@ h1 i {
 .task-card.status-terminado .task-title { text-decoration: line-through; }
 .task-card.status-sin-terminar { border-left-color: #fc8181; }
 
+.task-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.task-check-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
+  cursor: pointer;
+}
+
+.task-check {
+  appearance: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 2px solid #9aa9b8;
+  border-radius: 0.38rem;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  transition: 0.15s ease;
+}
+
+.task-check:checked {
+  background: #2a7f9c;
+  border-color: #2a7f9c;
+}
+
+.task-check:checked::after {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  top: 0.1rem;
+  width: 0.28rem;
+  height: 0.7rem;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .task-title {
   font-weight: 600;
   font-size: 1rem;
@@ -154,6 +381,45 @@ h1 i {
   margin-bottom: 0.2rem;
   line-height: 1.3;
 }
+
+.task-title.completed {
+  text-decoration: line-through;
+  color: #4a667a;
+}
+
+.task-state-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.task-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-sin-empezar {
+  background: #dfeeff;
+  color: #235a8e;
+}
+
+.status-terminado {
+  background: #daf5e8;
+  color: #1f7a4a;
+}
+
+.status-sin-terminar {
+  background: #ffd7d7;
+  color: #b42318;
+}
+
 .task-preview {
   font-size: 0.85rem;
   color: #4a667a;
@@ -168,12 +434,16 @@ h1 i {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  margin-top: 0.2rem;
+  margin-top: 0.35rem;
 }
 .task-meta span {
   display: flex;
   align-items: center;
   gap: 0.3rem;
+}
+.task-meta strong {
+  color: #1a2e3f;
+  font-weight: 700;
 }
 
 .task-footer {
@@ -388,6 +658,9 @@ h1 i {
 @media (max-width: 600px) {
   .app-container { padding: 1.2rem; }
   .top-bar { flex-direction: column; border-radius: 2rem; padding: 1rem; }
+  .priority-filter { width: 100%; }
+  .priority-filter-btn { width: 100%; justify-content: center; }
+  .priority-menu { left: 0; right: 0; }
   .top-bar .btn { justify-content: center; }
   .form-row { grid-template-columns: 1fr; }
   .task-card { flex-direction: column; align-items: stretch; }
