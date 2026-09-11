@@ -49,6 +49,7 @@
   }
 
   async function showApp() {
+    console.log('Perfil actual:', currentProfile);
     loginScreen.hidden = true;
     appContent.hidden = false;
     updateSessionDetails(currentProfile);
@@ -192,18 +193,22 @@
   }
 
   async function loadTasks() {
-    if (!isSupabaseEnabled()) {
-      tasks = getVisibleTasks(tasks);
-      renderTasks();
-      checkDeadlines();
-      return;
-    }
+  if (!isSupabaseEnabled()) {
+    tasks = getVisibleTasks(tasks);
+    renderTasks();
+    checkDeadlines();
+    return;
+  }
 
-    const { data: taskRows, error: taskError } = await supabaseClient
-      .from('tasks')
-      .select('*')
-      .order('deadline', { ascending: true });
-    if (taskError) throw taskError;
+  const { data: taskRows, error: taskError } = await supabaseClient
+    .from('tasks')
+    .select('*')
+    .order('deadline', { ascending: true });
+  
+  console.log(' Tareas desde Supabase:', taskRows);
+  console.log(' Error (si hay):', taskError);
+  
+  if (taskError) throw taskError;
 
     const { data: assignmentRows, error: assignmentError } = await supabaseClient
       .from('task_assignments')
@@ -945,5 +950,8 @@
   setInterval(checkDeadlines, 60000);
 
   // Exponer para debug
-  window.__tasks = tasks;
-})();
+  window.__tasks = () => tasks;
+  window.__currentProfile = () => currentProfile;
+  window.__currentUser = () => currentUser;
+  window.__supabaseClient = supabaseClient;
+  })();
