@@ -36,10 +36,10 @@ cloudtasks-equipoXX/
 ## Integrantes
 
 - Camilo Toro Agudelo
-- Estudiante 2
-- Estudiante 3
-- Estudiante 4
-- Estudiante 5
+- Maria Alejandra Muñoz Ruiz
+- Heidy Yuliana Hernandéz Huila
+- Sarah Rodriguez Ardila
+- María Camila Salamanca Cortés
 
 ## Inicio
 
