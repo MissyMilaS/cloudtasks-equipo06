@@ -12,8 +12,8 @@
   const supabaseClient = window.cloudTasksSupabase;
   const accounts = [
     { id: 'demo-admin', name: 'admin', email: 'admin@cloudtasks.com', password: 'admin123', role: 'admin' },
-    { id: 'demo-user-1', name: 'Usuario 1', email: 'usuario1@cloudtasks.com', password: 'usuario123', role: 'usuario' },
-    { id: 'demo-leader', name: 'Usuario 2', email: 'usuario2@cloudtasks.com', password: 'usuario123', role: 'lider' }
+    { id: 'demo-user-1', name: 'lider 1', email: 'lider1@cloudtasks.com', password: 'lider123', role: 'lider' },
+    { id: 'demo-leader', name: 'usuario 1', email: 'usuario1@cloudtasks.com', password: 'usuario123', role: 'usuario' }
   ];
   let currentUser = null;
   let currentProfile = null;
@@ -131,7 +131,7 @@
   });
 
   // ===== ESTADO =====
-  let tasks = [];
+  //let tasks = [];
   let nextId = 1;
   let currentFilter = '';
   let selectedPriorities = [];
@@ -717,6 +717,8 @@
   taskForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    try {
+
     const canEditStateAsLeader = currentProfile?.role === 'lider' && editingId && editingStateOnly;
     if (!canManageTasks() && !canEditStateAsLeader) return;
 
@@ -851,8 +853,12 @@
       }
     }
 
-    closeTaskModal();
-    await loadTasks();
+      closeTaskModal();
+      await loadTasks();
+    } catch (error) {
+      console.error('No se pudo guardar la tarea:', error);
+      alert(`No se pudo guardar la tarea: ${error.message || 'revisa la configuración de Supabase.'}`);
+    }
   });
 
   // ===== ABRIR MODAL DE DETALLES =====
@@ -873,8 +879,13 @@
   }
 
   // ===== AÑADIR TAREA (desde el botón) =====
-  function addTask() {
-    openTaskModal(); // Simplemente abre el modal vacío
+  async function addTask() {
+    try {
+      await openTaskModal();
+    } catch (error) {
+      console.error('No se pudo abrir el formulario de tareas:', error);
+      alert(`No se pudo abrir el formulario: ${error.message || 'revisa la configuración de Supabase.'}`);
+    }
   }
 
   // ===== EVENTOS =====
@@ -936,9 +947,14 @@
       if (taskModal.classList.contains('active')) closeTaskModal();
     }
   });
-
+  if (isSupabaseEnabled()) {
+    restoreSession().catch(() => {
+      loginScreen.hidden = false;
+      appContent.hidden = true;
+    });
+  }
   // ===== INICIALIZAR CON TAREAS DE EJEMPLO =====
-  function initDemoTasks() {
+  /*function initDemoTasks() {
     const now = Date.now();
     tasks = [
       
@@ -954,7 +970,7 @@
       loginScreen.hidden = false;
       appContent.hidden = true;
     });
-  }
+  }*/
 
   // Verificar fechas cada 60 segundos
   setInterval(checkDeadlines, 60000);
