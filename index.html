@@ -9,7 +9,51 @@
 </head>
 <body>
 
-<div class="app-container">
+<main class="login-screen" id="loginScreen">
+  <section class="login-card" aria-labelledby="loginTitle">
+    <div class="login-mark"><i class="fas fa-check-circle" aria-hidden="true"></i></div>
+    <p class="login-eyebrow">Bienvenido a</p>
+    <h1 id="loginTitle">CloudTasks</h1>
+    <p class="login-subtitle">Inicia sesión para continuar con tus tareas.</p>
+
+    <form id="loginForm" class="login-form">
+      <div class="login-field">
+        <label for="loginEmail">Correo electrónico</label>
+        <div class="login-input-wrap">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          <input type="email" id="loginEmail" autocomplete="email" required placeholder="tu@correo.com">
+        </div>
+      </div>
+      <div class="login-field">
+        <label for="loginPassword">Contraseña</label>
+        <div class="login-input-wrap">
+          <i class="fas fa-lock" aria-hidden="true"></i>
+          <input type="password" id="loginPassword" autocomplete="current-password" required minlength="4" placeholder="••••••••">
+        </div>
+      </div>
+      <p class="login-error" id="loginError" role="alert" hidden></p>
+      <button class="login-submit" type="submit"><i class="fas fa-arrow-right"></i> Iniciar sesión</button>
+    </form>
+  </section>
+</main>
+
+<aside class="session-panel" id="sessionPanel" hidden>
+  <button class="session-trigger" id="sessionTrigger" type="button" aria-expanded="false" aria-controls="sessionDetails">
+    <span class="session-avatar"><i class="fas fa-user" aria-hidden="true"></i></span>
+    <span class="session-trigger-copy">
+      <strong id="sessionName">Usuario</strong>
+      <small>Mi sesión</small>
+    </span>
+    <i class="fas fa-chevron-down session-chevron" aria-hidden="true"></i>
+  </button>
+  <div class="session-details" id="sessionDetails" hidden>
+    <p class="session-label">Sesión iniciada como</p>
+    <p class="session-email" id="sessionEmail"></p>
+    <button class="session-logout" id="logoutBtn" type="button"><i class="fas fa-right-from-bracket"></i> Cerrar sesión</button>
+  </div>
+</aside>
+
+<div class="app-container" id="appContent" hidden>
   <h1 class="brand-title"><span class="title">CloudTasks</span></h1>
   <h1><i class="fas fa-check-circle"></i> Mis tareas</h1>
 
@@ -17,19 +61,6 @@
     <div class="input-group" style="flex: 2;">
       <i class="fas fa-search"></i>
       <input type="text" id="searchInput" placeholder="Buscar tarea..." />
-    </div>
-    <div class="state-filter" id="stateFilter">
-      <button class="state-filter-btn" id="stateFilterBtn" type="button" aria-expanded="false">
-        <i class="fas fa-flag"></i> <span id="stateFilterLabel">Estado</span> <i class="fas fa-chevron-down"></i>
-      </button>
-      <div class="state-menu" id="stateMenu" hidden>
-        <label class="state-option"><input type="checkbox" value="sin-empezar"> <span>⬜ Sin empezar</span></label>
-        <label class="state-option"><input type="checkbox" value="iniciado"> <span>🟦 Iniciado</span></label>
-        <label class="state-option"><input type="checkbox" value="en-progreso"> <span>🟨 En progreso</span></label>
-        <label class="state-option"><input type="checkbox" value="terminado"> <span>🟩 Completado</span></label>
-        <label class="state-option"><input type="checkbox" value="sin-terminar"> <span>🟥 Retrasado</span></label>
-        <button class="state-clear" id="clearStateFilter" type="button">Limpiar</button>
-      </div>
     </div>
     <div class="priority-filter" id="priorityFilter">
       <button class="priority-filter-btn" id="priorityFilterBtn" type="button" aria-expanded="false">
@@ -95,6 +126,18 @@
         </select>
       </div>
 
+      <div class="form-group admin-task-assignment" id="taskAssignmentFields" hidden>
+        <label for="taskLeader">Líder de equipo</label>
+        <select id="taskLeader" required>
+          <option value="" selected disabled>Selecciona un líder</option>
+        </select>
+      </div>
+
+      <div class="form-group admin-task-assignment" id="taskUsersField" hidden>
+        <label for="taskUsers">Usuarios asignados</label>
+        <select id="taskUsers" multiple size="4"></select>
+      </div>
+
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" id="closeTaskModalBtn">Cancelar</button>
         <button type="submit" class="btn btn-primary" id="saveTaskBtn"><i class="fas fa-save"></i> Guardar</button>
@@ -119,6 +162,9 @@
     <button class="btn-close-modal" id="closeModalBtn"><i class="fas fa-chevron-left"></i> Cerrar detalles</button>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Tu script -->
