@@ -11,7 +11,7 @@
   const logoutBtn = document.getElementById('logoutBtn');
   const supabaseClient = window.cloudTasksSupabase;
   const accounts = [
-    { id: 'demo-admin', name: 'Administrador', email: 'admin@cloudtasks.com', password: 'admin123', role: 'administrador' },
+    { id: 'demo-admin', name: 'admin', email: 'admin@cloudtasks.com', password: 'admin123', role: 'admin' },
     { id: 'demo-user-1', name: 'Usuario 1', email: 'usuario1@cloudtasks.com', password: 'usuario123', role: 'usuario' },
     { id: 'demo-leader', name: 'Usuario 2', email: 'usuario2@cloudtasks.com', password: 'usuario123', role: 'lider' }
   ];
@@ -23,7 +23,7 @@
   }
 
   function canManageTasks() {
-    return currentProfile?.role === 'administrador';
+    return ['admin', 'administrador'].includes(currentProfile?.role);
   }
 
   function canChangeTaskState(task) {
@@ -31,11 +31,12 @@
   }
 
   function getVisibleTasks(taskList) {
+    if (!currentProfile) return [];
     if (canManageTasks()) return taskList;
-    if (currentProfile?.role === 'lider') {
+    if (currentProfile.role === 'lider') {
       return taskList.filter(task => task.leader_id === currentProfile.id);
     }
-    return taskList.filter(task => (task.assigned_user_ids || []).includes(currentProfile?.id));
+    return taskList.filter(task => (task.assigned_user_ids || []).includes(currentProfile.id));
   }
 
   function updateSessionDetails(profile) {
@@ -210,10 +211,16 @@
   
   if (taskError) throw taskError;
 
-    const { data: assignmentRows, error: assignmentError } = await supabaseClient
-      .from('task_assignments')
-      .select('task_id, user_id');
-    if (assignmentError) throw assignmentError;
+    let assignmentRows = [];
+    try {
+      const { data, error } = await supabaseClient
+        .from('task_assignments')
+        .select('task_id, user_id');
+      if (!error) assignmentRows = data || [];
+      else console.warn('Error al cargar asignaciones:', error);
+    } catch (e) {
+      console.warn('No se pudieron cargar las asignaciones:', e);
+    }
 
     const assignmentsByTask = (assignmentRows || []).reduce((result, assignment) => {
       result[assignment.task_id] = result[assignment.task_id] || [];
@@ -225,6 +232,9 @@
       ...task,
       assigned_user_ids: assignmentsByTask[task.id] || []
     })));
+
+    console.log('Tareas visibles tras filtro:', tasks);
+
     renderTasks();
     checkDeadlines();
   }
