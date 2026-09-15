@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Pruebas — CloudTasks</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      background: #f6f9fc;
+      color: #1a2e3f;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .sub {
+      color: #6b8797;
+      font-size: 0.85rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .sub a {
+      color: #1f6f8b;
+    }
+
+    /* ── Resumen ─────────────────────────────────────────── */
+    .resumen {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.4rem;
+      align-items: center;
+    }
+
+    .badge {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .verde {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .rojo {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .gris {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    /* ── Filtros ─────────────────────────────────────────── */
+    .filtros {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .filtro-btn {
+      padding: 0.3rem 0.8rem;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #374151;
+    }
+
+    .filtro-btn.activo {
+      background: #1f6f8b;
+      color: white;
+      border-color: #1f6f8b;
+    }
+
+    /* ── Módulo ──────────────────────────────────────────── */
+    .modulo {
+      margin-bottom: 1.3rem;
+    }
+
+    .modulo-titulo {
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #6b8797;
+      margin-bottom: 0.4rem;
+      border-bottom: 1px solid #e2eaf1;
+      padding-bottom: 0.3rem;
+    }
+
+    /* ── Caso ────────────────────────────────────────────── */
+    .caso {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.5rem 0.7rem;
+      border-radius: 0.45rem;
+      margin-bottom: 0.3rem;
+      background: white;
+      border: 1px solid #e2eaf1;
+    }
+
+    .caso.pasa {
+      border-left: 3px solid #10b981;
+    }
+
+    .caso.falla {
+      border-left: 3px solid #ef4444;
+      background: #fff8f8;
+    }
+
+    .caso[data-tipo="error"] {
+      opacity: 0.95;
+    }
+
+    .caso[data-tipo="limite"] {
+      opacity: 0.95;
+    }
+
+    .icono {
+      font-size: 0.95rem;
+      flex: 0 0 auto;
+      margin-top: 0.1rem;
+    }
+
+    .id {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #9ca3af;
+      flex: 0 0 2.6rem;
+      margin-top: 0.2rem;
+    }
+
+    .tipo-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+      flex: 0 0 auto;
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .tipo-normal {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .tipo-error {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .tipo-limite {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .desc {
+      flex: 1;
+      font-size: 0.855rem;
+    }
+
+    .detalle-falla {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.78rem;
+      color: #b91c1c;
+    }
+
+    .detalle-falla code {
+      background: #fee2e2;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🧪 Pruebas — CloudTasks (Equipo 06)</h1>
+  <p class="sub">
+    <span id="total">0</span> casos ·
+    <a href="../doc/plan_de_pruebas.md">Ver plan de pruebas</a>
+  </p>
+
+  <div class="resumen">
+    <span class="badge verde" id="badge-ok">✅ 0 pasan</span>
+    <span class="badge rojo" id="badge-ko" style="display:none">❌ 0 fallan</span>
+    <span class="badge gris" id="badge-normal">🔵 0 normales</span>
+    <span class="badge gris" id="badge-error">🟡 0 error</span>
+    <span class="badge gris" id="badge-limite">🟣 0 límite</span>
+  </div>
+
+  <div class="filtros">
+    <button class="filtro-btn activo" data-filtro="todos">Todos</button>
+    <button class="filtro-btn" data-filtro="normal">Normal</button>
+    <button class="filtro-btn" data-filtro="error">Error</button>
+    <button class="filtro-btn" data-filtro="limite">Límite</button>
+    <button class="filtro-btn" data-filtro="falla">Solo fallos</button>
+  </div>
+
+  <div id="resultados"></div>
+
+  <script src="funciones.js"></script>
+  <script src="pruebas.js"></script>
+  <script>
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function iguales(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+    function tipoTag(tipo) {
+      const cls = { normal: 'tipo-normal', error: 'tipo-error', limite: 'tipo-limite' };
+      return `<span class="tipo-tag ${cls[tipo] || ''}">${tipo}</span>`;
+    }
+
+    // ── Ejecutar todas las pruebas ──────────────────────────────────────────
+    const resultados = PRUEBAS.map(p => {
+      let real, paso;
+      try {
+        real = p.fn();
+        paso = iguales(real, p.esperado);
+      } catch (e) {
+        real = `ERROR: ${e.message}`;
+        paso = false;
+      }
+      return { ...p, real, paso };
+    });
+
+    // ── Contadores ──────────────────────────────────────────────────────────
+    const ok = resultados.filter(r => r.paso).length;
+    const ko = resultados.filter(r => !r.paso).length;
+    const cNormal = resultados.filter(r => r.tipo === 'normal').length;
+    const cError = resultados.filter(r => r.tipo === 'error').length;
+    const cLimite = resultados.filter(r => r.tipo === 'limite').length;
+
+    document.getElementById('total').textContent = resultados.length;
+    document.getElementById('badge-ok').textContent = `✅ ${ok} pasan`;
+    document.getElementById('badge-normal').textContent = `🔵 ${cNormal} normales`;
+    document.getElementById('badge-error').textContent = `🟡 ${cError} error`;
+    document.getElementById('badge-limite').textContent = `🟣 ${cLimite} límite`;
+
+    if (ko > 0) {
+      document.getElementById('badge-ko').textContent = `❌ ${ko} fallan`;
+      document.getElementById('badge-ko').style.display = '';
+    }
+
+    // ── Renderizar ──────────────────────────────────────────────────────────
+    function renderizar(filtro) {
+      const visible = filtro === 'todos' ? resultados
+        : filtro === 'falla' ? resultados.filter(r => !r.paso)
+          : resultados.filter(r => r.tipo === filtro);
+
+      // Agrupar por módulo
+      const modulos = {};
+      visible.forEach(r => {
+        if (!modulos[r.modulo]) modulos[r.modulo] = [];
+        modulos[r.modulo].push(r);
+      });
+
+      const contenedor = document.getElementById('resultados');
+      contenedor.innerHTML = '';
+
+      if (visible.length === 0) {
+        contenedor.innerHTML = '<p style="color:#6b8797;font-size:.875rem">Sin resultados para este filtro.</p>';
+        return;
+      }
+
+      Object.entries(modulos).forEach(([nombre, casos]) => {
+        const div = document.createElement('div');
+        div.className = 'modulo';
+        div.innerHTML = `<div class="modulo-titulo">${nombre}</div>`;
+
+        casos.forEach(r => {
+          const item = document.createElement('div');
+          item.className = `caso ${r.paso ? 'pasa' : 'falla'}`;
+          item.dataset.tipo = r.tipo;
+
+          let detalle = '';
+          if (!r.paso) {
+            detalle = `<span class="detalle-falla">
+            esperado: <code>${JSON.stringify(r.esperado)}</code>
+            &nbsp;·&nbsp;
+            obtenido: <code>${JSON.stringify(r.real)}</code>
+          </span>`;
+          }
+
+          item.innerHTML = `
+          <span class="icono">${r.paso ? '✅' : '❌'}</span>
+          <span class="id">${r.id}</span>
+          ${tipoTag(r.tipo)}
+          <span class="desc">${r.descripcion}${detalle}</span>
+        `;
+          div.appendChild(item);
+        });
+
+        contenedor.appendChild(div);
+      });
+    }
+
+    // ── Filtros ─────────────────────────────────────────────────────────────
+    renderizar('todos');
+
+    document.querySelectorAll('.filtro-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+        this.classList.add('activo');
+        renderizar(this.dataset.filtro);
+      });
+    });
+  </script>
+
+</body>
+
+</html>

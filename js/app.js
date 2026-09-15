@@ -1,4 +1,4 @@
-(function() {
+(function () {
   const loginScreen = document.getElementById('loginScreen');
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
@@ -78,7 +78,7 @@
     return true;
   }
 
-  loginForm.addEventListener('submit', async function(e) {
+  loginForm.addEventListener('submit', async function (e) {
     e.preventDefault();
     if (!loginForm.checkValidity()) {
       loginError.textContent = 'Escribe un correo válido y una contraseña de al menos 4 caracteres.';
@@ -111,13 +111,13 @@
     }
   });
 
-  sessionTrigger.addEventListener('click', function() {
+  sessionTrigger.addEventListener('click', function () {
     const isOpen = !sessionDetails.hidden;
     sessionDetails.hidden = isOpen;
     sessionTrigger.setAttribute('aria-expanded', String(!isOpen));
   });
 
-  logoutBtn.addEventListener('click', async function() {
+  logoutBtn.addEventListener('click', async function () {
     if (isSupabaseEnabled()) await supabaseClient.auth.signOut();
     currentUser = null;
     currentProfile = null;
@@ -194,22 +194,22 @@
   }
 
   async function loadTasks() {
-  if (!isSupabaseEnabled()) {
-    tasks = getVisibleTasks(tasks);
-    renderTasks();
-    checkDeadlines();
-    return;
-  }
+    if (!isSupabaseEnabled()) {
+      tasks = getVisibleTasks(tasks);
+      renderTasks();
+      checkDeadlines();
+      return;
+    }
 
-  const { data: taskRows, error: taskError } = await supabaseClient
-    .from('tasks')
-    .select('*')
-    .order('deadline', { ascending: true });
-  
-  console.log(' Tareas desde Supabase:', taskRows);
-  console.log(' Error (si hay):', taskError);
-  
-  if (taskError) throw taskError;
+    const { data: taskRows, error: taskError } = await supabaseClient
+      .from('tasks')
+      .select('*')
+      .order('deadline', { ascending: true });
+
+    console.log(' Tareas desde Supabase:', taskRows);
+    console.log(' Error (si hay):', taskError);
+
+    if (taskError) throw taskError;
 
     let assignmentRows = [];
     try {
@@ -287,12 +287,12 @@
   function formatDate(ts) {
     if (!ts) return 'Sin fecha';
     const d = new Date(ts);
-    return d.toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return d.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 
@@ -339,7 +339,7 @@
       '"': '&quot;',
       "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
   }
 
   function normalizeTaskState(task) {
@@ -550,8 +550,8 @@
     let filtered = tasks;
 
     if (filter !== '') {
-      filtered = filtered.filter(t => 
-        t.title.toLowerCase().includes(filter) || 
+      filtered = filtered.filter(t =>
+        t.title.toLowerCase().includes(filter) ||
         t.description.toLowerCase().includes(filter)
       );
     }
@@ -591,7 +591,7 @@
     `).join('');
 
     document.querySelectorAll('.section-header').forEach(header => {
-      header.addEventListener('click', function() {
+      header.addEventListener('click', function () {
         const section = this.closest('.task-section').dataset.section;
         sectionOpen[section] = !sectionOpen[section];
         renderTasks();
@@ -601,7 +601,7 @@
     // Event listeners
     document.querySelectorAll('.task-card').forEach(card => {
       const id = card.dataset.id;
-      card.addEventListener('click', function(e) {
+      card.addEventListener('click', function (e) {
         if (e.target.closest('button') || e.target.closest('.task-check')) return;
         const task = tasks.find(t => String(t.id) === id);
         if (task) openDetailModal(task);
@@ -609,7 +609,7 @@
     });
 
     document.querySelectorAll('.task-check').forEach(check => {
-      check.addEventListener('change', async function() {
+      check.addEventListener('change', async function () {
         const id = this.dataset.id;
         const task = tasks.find(t => String(t.id) === id);
         if (!task) return;
@@ -637,7 +637,7 @@
     });
 
     document.querySelectorAll('.task-footer button').forEach(btn => {
-      btn.addEventListener('click', async function(e) {
+      btn.addEventListener('click', async function (e) {
         e.stopPropagation();
         const id = this.dataset.id;
         const action = this.dataset.action;
@@ -714,99 +714,123 @@
   }
 
   // ===== GUARDAR TAREA =====
-  taskForm.addEventListener('submit', async function(e) {
+  taskForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     try {
 
-    const canEditStateAsLeader = currentProfile?.role === 'lider' && editingId && editingStateOnly;
-    if (!canManageTasks() && !canEditStateAsLeader) return;
+      const canEditStateAsLeader = currentProfile?.role === 'lider' && editingId && editingStateOnly;
+      if (!canManageTasks() && !canEditStateAsLeader) return;
 
-    const title = taskTitle.value.trim();
-    if (!title) {
-      alert('El título es obligatorio');
-      return;
-    }
+      const title = taskTitle.value.trim();
+      if (!title) {
+        alert('El título es obligatorio');
+        return;
+      }
 
-    const description = taskDescription.value.trim();
-    if (!description) {
-      alert('La descripción es obligatoria');
-      return;
-    }
+      const description = taskDescription.value.trim();
+      if (!description) {
+        alert('La descripción es obligatoria');
+        return;
+      }
 
-    const deadline = taskDeadline.value;
-    if (!deadline) {
-      alert('La fecha límite es obligatoria');
-      return;
-    }
+      const deadline = taskDeadline.value;
+      if (!deadline) {
+        alert('La fecha límite es obligatoria');
+        return;
+      }
 
-    const priority = taskPriority.value;
-    if (!priority) {
-      alert('La prioridad es obligatoria');
-      return;
-    }
+      const priority = taskPriority.value;
+      if (!priority) {
+        alert('La prioridad es obligatoria');
+        return;
+      }
 
-    const leaderId = taskLeader.value;
-    const selectedUserIds = Array.from(taskUsers.selectedOptions).map(option => option.value);
-    if (canManageTasks() && !leaderId) {
-      alert('Debes seleccionar exactamente un líder de equipo.');
-      return;
-    }
+      const leaderId = taskLeader.value;
+      const selectedUserIds = Array.from(taskUsers.selectedOptions).map(option => option.value);
+      if (canManageTasks() && !leaderId) {
+        alert('Debes seleccionar exactamente un líder de equipo.');
+        return;
+      }
 
-    const taskData = {
-      title: title,
-      description: description,
-      deadline: deadline,
-      priority: priority,
-      completed: false,
-      status: 'sin-empezar'
-    };
+      const taskData = {
+        title: title,
+        description: description,
+        deadline: deadline,
+        priority: priority,
+        completed: false,
+        status: 'sin-empezar'
+      };
 
-    if (editingId) {
-      const index = tasks.findIndex(t => t.id === editingId);
-      if (index !== -1) {
-        const currentTask = tasks[index];
-        if (editingStateOnly) {
-          const allowedStatuses = getEditStatusOptions(currentTask.status || 'sin-empezar', isTaskOverdue(currentTask));
-          if (!allowedStatuses.includes(taskStatus.value)) {
-            alert('El estado seleccionado no es válido para esta tarea.');
+      if (editingId) {
+        const index = tasks.findIndex(t => t.id === editingId);
+        if (index !== -1) {
+          const currentTask = tasks[index];
+          if (editingStateOnly) {
+            const allowedStatuses = getEditStatusOptions(currentTask.status || 'sin-empezar', isTaskOverdue(currentTask));
+            if (!allowedStatuses.includes(taskStatus.value)) {
+              alert('El estado seleccionado no es válido para esta tarea.');
+              return;
+            }
+            taskData.status = taskStatus.value;
+            taskData.completed = taskData.status === 'terminado';
+            if (isSupabaseEnabled()) {
+              const { error } = await supabaseClient
+                .from('tasks')
+                .update({ status: taskData.status, completed: taskData.completed })
+                .eq('id', currentTask.id);
+              if (error) throw error;
+            }
+            tasks[index] = { ...currentTask, status: taskData.status, completed: taskData.completed };
+            closeTaskModal();
+            await loadTasks();
             return;
           }
-          taskData.status = taskStatus.value;
-          taskData.completed = taskData.status === 'terminado';
+          const newDeadlineIsOverdue = new Date(deadline).getTime() < Date.now();
+          const restoredStatus = currentTask.status === 'sin-terminar' &&
+            !newDeadlineIsOverdue &&
+            ['sin-empezar', 'iniciado', 'en-progreso'].includes(currentTask.statusBeforeOverdue)
+            ? currentTask.statusBeforeOverdue
+            : currentTask.status || 'sin-empezar';
+          const allowedStatuses = getEditStatusOptions(
+            restoredStatus,
+            newDeadlineIsOverdue
+          );
+          const selectedStatus = allowedStatuses.includes(taskStatus.value) ? taskStatus.value : allowedStatuses[0];
+
+          taskData.status = selectedStatus;
+          taskData.completed = selectedStatus === 'terminado';
+          if (selectedStatus !== 'sin-terminar') delete currentTask.statusBeforeOverdue;
+          taskData.leader_id = leaderId;
+          taskData.assigned_user_ids = selectedUserIds;
           if (isSupabaseEnabled()) {
             const { error } = await supabaseClient
               .from('tasks')
-              .update({ status: taskData.status, completed: taskData.completed })
+              .update({
+                title: taskData.title,
+                description: taskData.description,
+                deadline: taskData.deadline,
+                priority: taskData.priority,
+                status: taskData.status,
+                completed: taskData.completed,
+                leader_id: taskData.leader_id
+              })
               .eq('id', currentTask.id);
             if (error) throw error;
+            await saveTaskAssignments(currentTask.id, selectedUserIds);
           }
-          tasks[index] = { ...currentTask, status: taskData.status, completed: taskData.completed };
-          closeTaskModal();
-          await loadTasks();
-          return;
+          tasks[index] = { ...currentTask, ...taskData };
         }
-        const newDeadlineIsOverdue = new Date(deadline).getTime() < Date.now();
-        const restoredStatus = currentTask.status === 'sin-terminar' &&
-          !newDeadlineIsOverdue &&
-          ['sin-empezar', 'iniciado', 'en-progreso'].includes(currentTask.statusBeforeOverdue)
-          ? currentTask.statusBeforeOverdue
-          : currentTask.status || 'sin-empezar';
-        const allowedStatuses = getEditStatusOptions(
-          restoredStatus,
-          newDeadlineIsOverdue
-        );
-        const selectedStatus = allowedStatuses.includes(taskStatus.value) ? taskStatus.value : allowedStatuses[0];
-
+      } else {
+        const selectedStatus = getCreateStatusOptions().includes(taskStatus.value) ? taskStatus.value : 'sin-empezar';
         taskData.status = selectedStatus;
-        taskData.completed = selectedStatus === 'terminado';
-        if (selectedStatus !== 'sin-terminar') delete currentTask.statusBeforeOverdue;
+        taskData.completed = false;
         taskData.leader_id = leaderId;
         taskData.assigned_user_ids = selectedUserIds;
         if (isSupabaseEnabled()) {
-          const { error } = await supabaseClient
+          const { data, error } = await supabaseClient
             .from('tasks')
-            .update({
+            .insert({
               title: taskData.title,
               description: taskData.description,
               deadline: taskData.deadline,
@@ -815,43 +839,19 @@
               completed: taskData.completed,
               leader_id: taskData.leader_id
             })
-            .eq('id', currentTask.id);
+            .select()
+            .single();
           if (error) throw error;
-          await saveTaskAssignments(currentTask.id, selectedUserIds);
+          await saveTaskAssignments(data.id, selectedUserIds);
+          tasks.push({ ...data, assigned_user_ids: selectedUserIds });
+        } else {
+          tasks.push({
+            id: nextId++,
+            ...taskData,
+            created_at: Date.now()
+          });
         }
-        tasks[index] = { ...currentTask, ...taskData };
       }
-    } else {
-      const selectedStatus = getCreateStatusOptions().includes(taskStatus.value) ? taskStatus.value : 'sin-empezar';
-      taskData.status = selectedStatus;
-      taskData.completed = false;
-      taskData.leader_id = leaderId;
-      taskData.assigned_user_ids = selectedUserIds;
-      if (isSupabaseEnabled()) {
-        const { data, error } = await supabaseClient
-          .from('tasks')
-          .insert({
-            title: taskData.title,
-            description: taskData.description,
-            deadline: taskData.deadline,
-            priority: taskData.priority,
-            status: taskData.status,
-            completed: taskData.completed,
-            leader_id: taskData.leader_id
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        await saveTaskAssignments(data.id, selectedUserIds);
-        tasks.push({ ...data, assigned_user_ids: selectedUserIds });
-      } else {
-        tasks.push({
-          id: nextId++,
-          ...taskData,
-          created_at: Date.now()
-        });
-      }
-    }
 
       closeTaskModal();
       await loadTasks();
@@ -891,7 +891,7 @@
   // ===== EVENTOS =====
   addBtn.addEventListener('click', addTask);
 
-  searchInput.addEventListener('input', function() {
+  searchInput.addEventListener('input', function () {
     currentFilter = this.value;
     renderTasks();
   });
@@ -906,7 +906,7 @@
     renderTasks();
   }
 
-  priorityFilterBtn.addEventListener('click', function() {
+  priorityFilterBtn.addEventListener('click', function () {
     const isOpen = !priorityMenu.hidden;
     priorityMenu.hidden = isOpen;
     priorityFilterBtn.setAttribute('aria-expanded', String(!isOpen));
@@ -916,14 +916,14 @@
     option.addEventListener('change', updatePriorityFilter);
   });
 
-  clearPriorityFilter.addEventListener('click', function() {
+  clearPriorityFilter.addEventListener('click', function () {
     priorityOptions.forEach(option => {
       option.checked = false;
     });
     updatePriorityFilter();
   });
 
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     if (!priorityFilter.contains(e.target)) {
       priorityMenu.hidden = true;
       priorityFilterBtn.setAttribute('aria-expanded', 'false');
@@ -934,14 +934,14 @@
   closeTaskModalBtn.addEventListener('click', closeTaskModal);
 
   // Cerrar modales al hacer clic fuera
-  detailModal.addEventListener('click', function(e) {
+  detailModal.addEventListener('click', function (e) {
     if (e.target === this) closeDetailModal();
   });
-  taskModal.addEventListener('click', function(e) {
+  taskModal.addEventListener('click', function (e) {
     if (e.target === this) closeTaskModal();
   });
 
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       if (detailModal.classList.contains('active')) closeDetailModal();
       if (taskModal.classList.contains('active')) closeTaskModal();
@@ -980,4 +980,4 @@
   window.__currentProfile = () => currentProfile;
   window.__currentUser = () => currentUser;
   window.__supabaseClient = supabaseClient;
-  })();
+})();
