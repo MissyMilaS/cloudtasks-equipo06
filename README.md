@@ -4,7 +4,6 @@
 
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?logo=vercel)](https://cloudtasks-equipo06.vercel.app)
 [![Status](https://img.shields.io/badge/Status-Production-brightgreen)]()
-[![License](https://img.shields.io/badge/License-MIT-blue)]()
 
 ---
 
