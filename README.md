@@ -519,37 +519,7 @@ cloudtasks.eu.org  (en trámite con EU.org)
 - 🔗 **Supabase Docs:** https://supabase.com/docs
 - 🚀 **Vercel Docs:** https://vercel.com/docs
 
----
 
-## 🤝 Contribuir
-
-¿Quieres contribuir? Abre un **Pull Request** siguiendo:
-
-1. Crea una rama: `git checkout -b feature/tu-feature`
-2. Haz cambios y prueba
-3. Commit: `git commit -m "Descripción clara"`
-4. Push: `git push origin feature/tu-feature`
-5. Abre PR en GitHub
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo licencia **MIT**. Ver `LICENSE` para detalles.
-
----
-
-## 📞 Contacto & Soporte
-
-- 🐛 **Reportar bug:** [Abrir Issue](https://github.com/MissyMilaS/cloudtasks-equipo06/issues)
-- 💬 **Preguntas:** [Discusiones](https://github.com/MissyMilaS/cloudtasks-equipo06/discussions)
-- 📧 **Email:** contacto@cloudtasks.com (próximamente)
-
----
-
-<div align="center">
-
-**⭐ Si te gusta CloudTasks, dale una estrella en GitHub ⭐**
 
 Hecho con ❤️ por el **Equipo 06**
 
