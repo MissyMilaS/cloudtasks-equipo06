@@ -2,8 +2,7 @@
 
 > **Aplicación web moderna** para gestionar tareas personales o de equipo con roles, permisos y persistencia en la nube.
 
-[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?logo=vercel)](https://cloudtasks-equipo06.vercel.app)
-[![Status](https://img.shields.io/badge/Status-Production-brightgreen)]()
+
 
 ---
 
