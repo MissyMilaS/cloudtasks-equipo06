@@ -124,7 +124,8 @@ CREATE TABLE public.tasks (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deadline TIMESTAMPTZ NOT NULL,
   priority public.task_priority NOT NULL,
-  leader_id UUID NOT NULL REFERENCES public.profiles(id),
+  leader_id UUID REFERENCES public.profiles(id),
+  owner_id UUID REFERENCES public.profiles(id),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -155,6 +156,14 @@ CREATE INDEX tasks_deadline_idx ON public.tasks(deadline);
 <summary><strong>🔒 Click para expandir políticas RLS</strong></summary>
 
 ```sql
+-- Si la tabla tasks ya existía, agrega el propietario de las tareas individuales.
+ALTER TABLE public.tasks
+  ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES public.profiles(id);
+
+-- Permite tareas personales sin líder de equipo.
+ALTER TABLE public.tasks
+  ALTER COLUMN leader_id DROP NOT NULL;
+
 -- ═════════════════════════════════════════════════════════════
 -- ACTIVAR RLS EN TODAS LAS TABLAS
 -- ═════════════════════════════════════════════════════════════
@@ -178,6 +187,7 @@ CREATE POLICY "Tareas visibles por rol"
   ON public.tasks FOR SELECT TO authenticated
   USING (
     EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador')
+    OR owner_id = auth.uid()
     OR leader_id = auth.uid()
     OR EXISTS (
       SELECT 1 FROM public.task_assignments a
@@ -185,18 +195,31 @@ CREATE POLICY "Tareas visibles por rol"
     )
   );
 
--- 2. CREACIÓN: Solo administradores
-CREATE POLICY "Solo administradores crean tareas"
+-- 2. CREACIÓN: administradores crean grupales; cada usuario crea las propias
+CREATE POLICY "Usuarios crean tareas propias"
   ON public.tasks FOR INSERT TO authenticated
   WITH CHECK (
-    EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador')
+    (
+      EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador')
+      AND owner_id IS NULL
+    )
+    OR (
+      owner_id = auth.uid()
+      AND leader_id IS NULL
+    )
   );
 
--- 3. ACTUALIZACIÓN: Solo administradores
-CREATE POLICY "Solo administradores actualizan tareas"
+-- 3. ACTUALIZACIÓN: administradores y propietarios de tareas individuales
+CREATE POLICY "Administradores y propietarios actualizan tareas"
   ON public.tasks FOR UPDATE TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador'))
-  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador'));
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador')
+    OR owner_id = auth.uid()
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador')
+    OR owner_id = auth.uid()
+  );
 
 -- 4. ACTUALIZACIÓN: Líderes solo pueden cambiar estado
 CREATE POLICY "Líderes actualizan estado"
@@ -204,10 +227,13 @@ CREATE POLICY "Líderes actualizan estado"
   USING (leader_id = auth.uid())
   WITH CHECK (leader_id = auth.uid());
 
--- 5. ELIMINACIÓN: Solo administradores
-CREATE POLICY "Solo administradores eliminan tareas"
+-- 5. ELIMINACIÓN: administradores y propietarios de tareas individuales
+CREATE POLICY "Administradores y propietarios eliminan tareas"
   ON public.tasks FOR DELETE TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador'));
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'administrador')
+    OR owner_id = auth.uid()
+  );
 
 -- ═════════════════════════════════════════════════════════════
 -- POLÍTICAS: TASK_ASSIGNMENTS

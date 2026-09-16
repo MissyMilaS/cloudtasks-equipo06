@@ -17,6 +17,7 @@
   ];
   let currentUser = null;
   let currentProfile = null;
+  let profileDirectory = [];
 
   function isSupabaseEnabled() {
     return Boolean(supabaseClient);
@@ -27,16 +28,26 @@
   }
 
   function canChangeTaskState(task) {
-    return canManageTasks() || (currentProfile?.role === 'lider' && task.leader_id === currentProfile.id);
+    return canManageTasks() || task.owner_id === currentProfile?.id ||
+      (currentProfile?.role === 'lider' && task.leader_id === currentProfile.id);
+  }
+
+  function canManageTask(task) {
+    return canManageTasks() || isOwnTask(task);
+  }
+
+  function isOwnTask(task) {
+    return task.owner_id === currentProfile?.id;
   }
 
   function getVisibleTasks(taskList) {
     if (!currentProfile) return [];
-    if (canManageTasks()) return taskList;
-    if (currentProfile.role === 'lider') {
-      return taskList.filter(task => task.leader_id === currentProfile.id);
-    }
-    return taskList.filter(task => (task.assigned_user_ids || []).includes(currentProfile.id));
+    if (canManageTasks()) return taskList.filter(task => !task.owner_id);
+    return taskList.filter(task =>
+      isOwnTask(task) ||
+      (currentProfile.role === 'lider' && task.leader_id === currentProfile.id) ||
+      (task.assigned_user_ids || []).includes(currentProfile.id)
+    );
   }
 
   function updateSessionDetails(profile) {
@@ -46,7 +57,7 @@
   }
 
   function updateRoleControls() {
-    addBtn.hidden = !canManageTasks();
+    addBtn.hidden = !currentProfile;
   }
 
   async function showApp() {
@@ -135,6 +146,9 @@
   let nextId = 1;
   let currentFilter = '';
   let selectedPriorities = [];
+  let selectedUsers = [];
+  let calendarDate = new Date();
+  let selectedCalendarDate = new Date();
   let editingId = null;
   let editingStateOnly = false;
   const sectionOpen = {
@@ -155,6 +169,22 @@
   const priorityMenu = document.getElementById('priorityMenu');
   const priorityOptions = priorityMenu.querySelectorAll('input[type="checkbox"]');
   const clearPriorityFilter = document.getElementById('clearPriorityFilter');
+  const userFilter = document.getElementById('userFilter');
+  const userFilterBtn = document.getElementById('userFilterBtn');
+  const userFilterLabel = document.getElementById('userFilterLabel');
+  const userMenu = document.getElementById('userMenu');
+  const userFilterOptions = document.getElementById('userFilterOptions');
+  const clearUserFilter = document.getElementById('clearUserFilter');
+  const calendarMonth = document.getElementById('calendarMonth');
+  const calendarGrid = document.getElementById('calendarGrid');
+  const calendarDayTasks = document.getElementById('calendarDayTasks');
+  const previousMonth = document.getElementById('previousMonth');
+  const nextMonth = document.getElementById('nextMonth');
+  const statTotal = document.getElementById('statTotal');
+  const statPending = document.getElementById('statPending');
+  const statCompleted = document.getElementById('statCompleted');
+  const statOverdue = document.getElementById('statOverdue');
+  const statsPriorities = document.getElementById('statsPriorities');
 
   // Modal de creación/edición
   const taskModal = document.getElementById('taskModal');
@@ -180,6 +210,8 @@
   const modalCreated = document.getElementById('modalCreated');
   const modalDeadline = document.getElementById('modalDeadline');
   const modalPriority = document.getElementById('modalPriority');
+  const modalLeader = document.getElementById('modalLeader');
+  const modalAssignedUsers = document.getElementById('modalAssignedUsers');
   const closeModalBtn = document.getElementById('closeModalBtn');
 
   async function loadProfiles() {
@@ -195,6 +227,8 @@
 
   async function loadTasks() {
     if (!isSupabaseEnabled()) {
+      profileDirectory = await loadProfiles();
+      updateUserFilterOptions();
       tasks = getVisibleTasks(tasks);
       renderTasks();
       checkDeadlines();
@@ -210,6 +244,9 @@
     console.log(' Error (si hay):', taskError);
 
     if (taskError) throw taskError;
+
+    profileDirectory = await loadProfiles();
+    updateUserFilterOptions();
 
     let assignmentRows = [];
     try {
@@ -280,8 +317,115 @@
     });
     taskAssignmentFields.hidden = false;
     taskUsersField.hidden = false;
-    taskLeader.required = true;
+    taskLeader.required = false;
   }
+
+  function updateUserFilterOptions() {
+    const availableProfiles = profileDirectory.filter(profile => profile.role !== 'administrador' && profile.role !== 'admin');
+    const availableIds = new Set(availableProfiles.map(profile => profile.id));
+    selectedUsers = selectedUsers.filter(userId => availableIds.has(userId));
+    userFilterOptions.innerHTML = availableProfiles.length > 0
+      ? availableProfiles.map(profile => `
+        <label class="priority-option">
+          <input type="checkbox" value="${profile.id}" ${selectedUsers.includes(profile.id) ? 'checked' : ''}>
+          <span>${escapeHtml(profile.name)}</span>
+        </label>
+      `).join('')
+      : '<span class="user-filter-empty">No hay usuarios disponibles</span>';
+
+    userFilterOptions.querySelectorAll('input').forEach(option => {
+      option.addEventListener('change', updateUserFilter);
+    });
+    updateUserFilterLabel();
+  }
+
+  function updateUserFilterLabel() {
+    userFilterLabel.textContent = selectedUsers.length > 0
+      ? `Usuarios (${selectedUsers.length})`
+      : 'Usuarios';
+  }
+
+  function updateUserFilter() {
+    selectedUsers = Array.from(userFilterOptions.querySelectorAll('input:checked'))
+      .map(option => option.value);
+    updateUserFilterLabel();
+    renderTasks();
+  }
+
+  function dateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function taskDateKey(task) {
+    if (!task.deadline) return null;
+    const date = new Date(task.deadline);
+    return Number.isNaN(date.getTime()) ? null : dateKey(date);
+  }
+
+  function renderDashboard() {
+    const taskDates = tasks.reduce((result, task) => {
+      const key = taskDateKey(task);
+      if (key) result[key] = (result[key] || []).concat(task);
+      return result;
+    }, {});
+    const monthStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
+    const firstDay = (monthStart.getDay() + 6) % 7;
+    const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+    const monthLabel = calendarDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    calendarMonth.textContent = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+    calendarGrid.innerHTML = '';
+
+    for (let index = 0; index < firstDay + daysInMonth; index += 1) {
+      if (index < firstDay) {
+        calendarGrid.appendChild(document.createElement('span'));
+        continue;
+      }
+      const day = index - firstDay + 1;
+      const date = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+      const key = dateKey(date);
+      const dayTasks = taskDates[key] || [];
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `calendar-day${key === dateKey(selectedCalendarDate) ? ' is-selected' : ''}${key === dateKey(new Date()) ? ' is-today' : ''}`;
+      button.innerHTML = `<span>${day}</span>${dayTasks.length ? `<i class="calendar-dots">${dayTasks.slice(0, 3).map(task => `<b class="priority-dot priority-${task.priority}"></b>`).join('')}</i>` : ''}`;
+      button.addEventListener('click', function () {
+        selectedCalendarDate = date;
+        renderDashboard();
+      });
+      calendarGrid.appendChild(button);
+    }
+
+    const selectedTasks = taskDates[dateKey(selectedCalendarDate)] || [];
+    calendarDayTasks.innerHTML = `<h3>Tareas del ${selectedCalendarDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</h3>` +
+      (selectedTasks.length ? selectedTasks.map(task => `<button class="calendar-task" type="button" data-task-id="${task.id}"><span class="priority-dot priority-${task.priority}"></span>${escapeHtml(task.title)}</button>`).join('') : '<p class="calendar-empty">No hay tareas para este día.</p>');
+    calendarDayTasks.querySelectorAll('.calendar-task').forEach(button => {
+      button.addEventListener('click', function () {
+        const task = tasks.find(item => String(item.id) === this.dataset.taskId);
+        if (task) openDetailModal(task);
+      });
+    });
+
+    const completed = tasks.filter(task => task.completed || task.status === 'terminado').length;
+    const overdue = tasks.filter(task => isTaskOverdue(task)).length;
+    statTotal.textContent = tasks.length;
+    statPending.textContent = tasks.length - completed;
+    statCompleted.textContent = completed;
+    statOverdue.textContent = overdue;
+    statsPriorities.innerHTML = ['urgente', 'alta', 'media', 'baja'].map(priority => {
+      const count = tasks.filter(task => task.priority === priority).length;
+      return `<span><b class="priority-dot priority-${priority}"></b>${getPriorityLabel(priority).replace(/^\S+\s/, '')}<strong>${count}</strong></span>`;
+    }).join('');
+  }
+
+  taskUsers.addEventListener('mousedown', function (event) {
+    const option = event.target.closest('option');
+    if (!option) return;
+    event.preventDefault();
+    option.selected = !option.selected;
+  });
 
   // ===== FUNCIONES AUXILIARES =====
   function formatDate(ts) {
@@ -298,7 +442,12 @@
 
   function formatDateInput(dateStr) {
     if (!dateStr) return '';
-    return dateStr.slice(0, 16);
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const pad = value => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+      `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
   function getStatusLabel(status) {
@@ -365,6 +514,8 @@
     if (task.status === 'sin-terminar' && editableStatuses.includes(task.statusBeforeOverdue)) {
       task.status = task.statusBeforeOverdue;
       delete task.statusBeforeOverdue;
+    } else if (task.status === 'sin-terminar') {
+      task.status = 'sin-empezar';
     }
 
     if (!['sin-empezar', 'iniciado', 'en-progreso', 'sin-terminar'].includes(task.status)) {
@@ -513,7 +664,7 @@
     const isOverdue = isTaskOverdue(currentTask);
     const state = getTaskState(currentTask);
     const canUpdateState = canChangeTaskState(currentTask);
-    const canEdit = canManageTasks();
+    const canEdit = canManageTask(currentTask);
 
     return `
       <div class="task-card ${getPriorityClass(currentTask.priority)} ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${currentTask.id}">
@@ -560,6 +711,14 @@
       filtered = filtered.filter(task => selectedPriorities.includes(task.priority));
     }
 
+    if (selectedUsers.length > 0) {
+      filtered = filtered.filter(task =>
+        selectedUsers.includes(task.owner_id) ||
+        selectedUsers.includes(task.leader_id) ||
+        (task.assigned_user_ids || []).some(userId => selectedUsers.includes(userId))
+      );
+    }
+
     const sections = {
       overdue: sortTasks(filtered.filter(task => getTaskSection(task) === 'overdue')),
       'sin-empezar': sortTasks(filtered.filter(task => getTaskSection(task) === 'sin-empezar')),
@@ -570,6 +729,7 @@
 
     if (filtered.length === 0) {
       tasksGrid.innerHTML = `<div class="empty-message">${tasks.length === 0 ? 'No hay tareas, añade una nueva' : 'No se encontraron tareas con ese filtro'}</div>`;
+      renderDashboard();
       return;
     }
 
@@ -589,6 +749,7 @@
         <div class="section-content">${sectionTasks.map(renderTaskCard).join('')}</div>
       </section>
     `).join('');
+    renderDashboard();
 
     document.querySelectorAll('.section-header').forEach(header => {
       header.addEventListener('click', function () {
@@ -718,9 +879,10 @@
     e.preventDefault();
 
     try {
-
+      const currentTask = editingId ? tasks.find(task => task.id === editingId) : null;
+      const canEditOwnTask = currentTask && isOwnTask(currentTask);
       const canEditStateAsLeader = currentProfile?.role === 'lider' && editingId && editingStateOnly;
-      if (!canManageTasks() && !canEditStateAsLeader) return;
+      if (!canManageTasks() && !canEditOwnTask && !canEditStateAsLeader && editingId) return;
 
       const title = taskTitle.value.trim();
       if (!title) {
@@ -746,9 +908,9 @@
         return;
       }
 
-      const leaderId = taskLeader.value;
+      const leaderId = canManageTasks() ? (taskLeader.value || null) : null;
       const selectedUserIds = Array.from(taskUsers.selectedOptions).map(option => option.value);
-      if (canManageTasks() && !leaderId) {
+      if (canManageTasks() && selectedUserIds.length > 0 && !leaderId) {
         alert('Debes seleccionar exactamente un líder de equipo.');
         return;
       }
@@ -759,7 +921,8 @@
         deadline: deadline,
         priority: priority,
         completed: false,
-        status: 'sin-empezar'
+        status: 'sin-empezar',
+        owner_id: editingId ? currentTask?.owner_id || null : (canManageTasks() ? null : currentProfile.id)
       };
 
       if (editingId) {
@@ -787,10 +950,10 @@
             return;
           }
           const newDeadlineIsOverdue = new Date(deadline).getTime() < Date.now();
-          const restoredStatus = currentTask.status === 'sin-terminar' &&
-            !newDeadlineIsOverdue &&
-            ['sin-empezar', 'iniciado', 'en-progreso'].includes(currentTask.statusBeforeOverdue)
-            ? currentTask.statusBeforeOverdue
+          const restoredStatus = currentTask.status === 'sin-terminar' && !newDeadlineIsOverdue
+            ? (['sin-empezar', 'iniciado', 'en-progreso'].includes(currentTask.statusBeforeOverdue)
+              ? currentTask.statusBeforeOverdue
+              : 'sin-empezar')
             : currentTask.status || 'sin-empezar';
           const allowedStatuses = getEditStatusOptions(
             restoredStatus,
@@ -813,7 +976,8 @@
                 priority: taskData.priority,
                 status: taskData.status,
                 completed: taskData.completed,
-                leader_id: taskData.leader_id
+                leader_id: taskData.leader_id,
+                owner_id: taskData.owner_id
               })
               .eq('id', currentTask.id);
             if (error) throw error;
@@ -837,7 +1001,8 @@
               priority: taskData.priority,
               status: taskData.status,
               completed: taskData.completed,
-              leader_id: taskData.leader_id
+              leader_id: taskData.leader_id,
+              owner_id: taskData.owner_id
             })
             .select()
             .single();
@@ -864,6 +1029,11 @@
   // ===== ABRIR MODAL DE DETALLES =====
   function openDetailModal(task) {
     const normalizedTask = normalizeTaskState({ ...task });
+    const leader = profileDirectory.find(profile => profile.id === normalizedTask.leader_id);
+    const assignedUsers = (normalizedTask.assigned_user_ids || [])
+      .map(userId => profileDirectory.find(profile => profile.id === userId))
+      .filter(Boolean)
+      .map(profile => `${profile.name} (${profile.email})`);
     modalDetailTitle.textContent = escapeHtml(normalizedTask.title);
     modalStatus.textContent = getStatusLabel(normalizedTask.status);
     modalStatus.className = `detail-status ${getStatusClass(normalizedTask.status)}`;
@@ -871,6 +1041,8 @@
     modalCreated.textContent = normalizedTask.created_at ? formatDate(normalizedTask.created_at) : (normalizedTask.createdAt ? formatDate(normalizedTask.createdAt) : 'Sin fecha');
     modalDeadline.textContent = normalizedTask.deadline ? formatDate(normalizedTask.deadline) : 'Sin fecha';
     modalPriority.textContent = getPriorityLabel(normalizedTask.priority);
+    modalLeader.textContent = leader ? `${leader.name} (${leader.email})` : 'Sin líder asignado';
+    modalAssignedUsers.textContent = assignedUsers.length > 0 ? assignedUsers.join(', ') : 'Sin usuarios asignados';
     detailModal.classList.add('active');
   }
 
@@ -923,10 +1095,39 @@
     updatePriorityFilter();
   });
 
+  userFilterBtn.addEventListener('click', function () {
+    const isOpen = !userMenu.hidden;
+    userMenu.hidden = isOpen;
+    userFilterBtn.setAttribute('aria-expanded', String(!isOpen));
+  });
+
+  clearUserFilter.addEventListener('click', function () {
+    selectedUsers = [];
+    userFilterOptions.querySelectorAll('input').forEach(option => {
+      option.checked = false;
+    });
+    updateUserFilterLabel();
+    renderTasks();
+  });
+
+  previousMonth.addEventListener('click', function () {
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
+    renderDashboard();
+  });
+
+  nextMonth.addEventListener('click', function () {
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
+    renderDashboard();
+  });
+
   document.addEventListener('click', function (e) {
     if (!priorityFilter.contains(e.target)) {
       priorityMenu.hidden = true;
       priorityFilterBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (!userFilter.contains(e.target)) {
+      userMenu.hidden = true;
+      userFilterBtn.setAttribute('aria-expanded', 'false');
     }
   });
 
